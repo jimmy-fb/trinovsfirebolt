@@ -10,6 +10,7 @@ This project provides a benchmarking tool for various data warehouse vendors, al
 - Execute benchmark queries and collect results.
 - Optionally execute a setup SQL file before running benchmarks.
 - Easily configurable through command-line arguments.
+- Supports both general SQL files for benchmarks and vendor-specific SQL files.
 
 ## Requirements
 
@@ -70,6 +71,16 @@ python -m src.main <benchmark_name> --vendors <vendor1,vendor2,...> [--execute-s
 python -m src.main my_benchmark --vendors snowflake,firebolt --execute-setup True
 ```
 
+## Flexibility in SQL File Usage
+
+This project allows for flexibility in how SQL files are used:
+
+- **General SQL Files**: Each benchmark folder contains a general `benchmark.sql` and `setup.sql` file that can be used for all vendors. These files contain common queries that apply to all vendors.
+
+- **Vendor-Specific SQL Files**: If a vendor has specific requirements or optimizations, you can create a `benchmark.sql` and `setup.sql` file within the vendor's folder. If these vendor-specific files exist, they will be used instead of the general files.
+
+This structure allows you to easily manage and execute queries that are tailored to specific vendors while still providing a common set of queries for all vendors.
+
 ## Directory Structure
 
 ```
@@ -77,32 +88,41 @@ project-root/
 │
 ├── src/
 │   ├── connectors/          # Contains connector implementations for each vendor
+│   │   ├── base.py
+│   │   ├── firebolt.py
+│   │   ├── bigquery.py
+│   │   ├── redshift.py
+│   │   └── snowflake.py
+│   ├── exporters/          # Contains exporter implementations for each vendor
+│   │   ├── base.py
+│   │   ├── csv_exporter.py
+│   │   └── visual_exporter.py
 │   ├── main.py              # Entry point for the benchmarking tool
 │   └── runner.py            # Benchmark runner logic
 │
 ├── benchmarks/              # Contains benchmark definitions
-│   ├── tpcg/                # TPC-G benchmark folder
-│   │   ├── tpcg.sql         # Benchmark SQL file for TPC-G
-│   │   ├── snowflake_setup.sql  # Setup SQL for Snowflake
-│   │   ├── firebolt_setup.sql   # Setup SQL for Firebolt
-│   │   └── bigquery_setup.sql   # Setup SQL for BigQuery
-│   └── another_benchmark/   # Another benchmark folder
-│       ├── another_benchmark.sql # Benchmark SQL file for another benchmark
-│       ├── snowflake_setup.sql
-│       ├── firebolt_setup.sql
-│       └── bigquery_setup.sql
+│   ├── sample_benchmark/
+│   │   ├── benchmark.sql          # General benchmark SQL file for sample_benchmark
+│   │   ├── setup.sql              # General setup SQL file for sample_benchmark
+│   │   └── firebolt/
+│   │       └── setup.sql          # firebolt specific setup SQL file
+│   │   
+│   └── firenewt/
+│       ├── firebolt/
+│       │   ├── benchmark.sql      # firebolt specific benchmark SQL file
+│       │   └── setup.sql          # firebolt specific setup SQL file
+│       │
+│       └── snowflake/
+│           ├── benchmark.sql      # snowflake specific benchmark SQL file
+│           └── setup.sql          # snowflake specific setup SQL file
 │
 ├── tests/                   # Contains unit and integration tests
-│   ├── test_connectors.py   # Tests for connector implementations
-│   ├── test_benchmarks.py    # Tests for benchmark logic
-│   └── test_runner.py       # Tests for the benchmark runner
 │
 ├── config/                  # Contains configuration files for the application
 │   ├── credentials/         # Contains credential files
 │   │   ├── credentials.json  # Single credentials file for all vendors (ignored)
 │   │   └── sample_credentials.json  # Sample credentials file with dummy data
-│   ├── config.yaml          # Example configuration file
-│   └── other_config.json     # Other configuration files
+│   └── settings.py     
 │
 ├── requirements.txt         # Python package dependencies
 ├── run_benchmark.sh        # Bash script to run the benchmark

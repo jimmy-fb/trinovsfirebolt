@@ -89,13 +89,6 @@ class BenchmarkRunner:
             
             connector_class = self._get_connector_class(vendor)
             self.connectors[vendor] = connector_class(config=self.credentials[vendor])
-            
-        # Load queries
-        self.queries = self._load_queries(Path(benchmark_path) / f"{benchmark_name}.sql")
-        if not self.queries:
-            raise ValueError(f"No queries found in benchmark: {benchmark_name}")
-            
-        self.logger.info(f"Loaded {len(self.queries)} queries for benchmark: {benchmark_name}")
 
     def _get_connector_class(self, vendor: str):
         """Get the appropriate connector class for a vendor."""
@@ -119,8 +112,13 @@ class BenchmarkRunner:
 
                 for line in lines:
                     line = line.strip()
-                    # Skip empty lines and comments
-                    if not line or line.startswith('--'):
+                    # Skip empty lines
+                    if not line:
+                        continue
+                    # Remove inline comments
+                    line = line.split('--')[0].strip()  # Remove everything after '--'
+                    # Skip lines that are now empty after removing comments
+                    if not line:
                         continue
                     # If the line ends with a semicolon, it's a complete query
                     if line.endswith(';'):
@@ -192,6 +190,18 @@ class BenchmarkRunner:
                     self.logger.error(f"Error in concurrent execution: {str(e)}")
         
         return results
+    
+    def _get_sql_file(self, vendor, file_type):
+        # Construct the general and vendor-specific file paths
+        general_file= Path(self.benchmark_path) / f"{file_type}.sql"
+        # general_file = os.path.join(self.benchmark_path, f"{file_type}.sql")
+        vendor_file = Path(self.benchmark_path) / f"{vendor}"/ f"{file_type}.sql"
+
+        # Check if vendor-specific file exists, return it if it does, otherwise return the general file
+        if os.path.exists(vendor_file):
+            return vendor_file
+        return general_file
+
 
     def run_benchmark(self) -> Dict:
         results = {}
@@ -206,9 +216,10 @@ class BenchmarkRunner:
 
             # Execute setup script if execute_setup is True
             if self.execute_setup:
-                setup_file = f"{vendor}_setup.sql"
-                self._execute_setup_script(setup_file, vendor)
-
+                if not self._execute_setup_script(vendor):  # Only run benchmark if setup succeeded
+                    print("Skipping benchmark due to setup failure.")
+                    return  # 
+                
             vendor_results = []
             
             try:
@@ -218,7 +229,13 @@ class BenchmarkRunner:
                     self.pool_size
                 )
                 
-                for query_number, query in enumerate(self.queries, 1):
+                # Load the appropriate benchmark SQL file for the vendor
+                benchmark_file = self._get_sql_file(vendor, 'benchmark')
+                benchmark_queries = self._load_queries(benchmark_file)
+                if not benchmark_queries:
+                    raise ValueError(f"No benchmark queries found for vendor : {vendor}")
+                self.logger.info(f"Loaded {len(benchmark_queries)} benchmark queries for : {vendor}")
+                for query_number, query in enumerate(benchmark_queries, 1):
                     print(f"Running query {query_number} with {self.concurrency} concurrent executions...")
                     # Run each query multiple times
                     for iteration in range(num_iterations):
@@ -239,8 +256,7 @@ class BenchmarkRunner:
                     for result in vendor_results
                 ]
                 
-                results[vendor] = csv_data  # Store the formatted data for this vendor
-                
+                results[vendor] = csv_data  # Store the formatted data for this vendor        
                 self.connection_pools[vendor].close_all()
                 
             except Exception as e:
@@ -263,12 +279,16 @@ class BenchmarkRunner:
 
         return results
 
-    def _execute_setup_script(self, setup_file: str, vendor: str):
+    def _execute_setup_script(self, vendor: str):
         """Execute the setup SQL script for the vendor."""
         try:
-            setup_queries = self._load_queries(Path(self.benchmark_path) / setup_file)
+            # Load the setup SQL file for the vendor
+            setup_file = self._get_sql_file(vendor, 'setup')
+            setup_queries = self._load_queries(setup_file)
             for query in setup_queries:
                 self.connectors[vendor].execute_query(query)
             self.logger.info(f"Executed setup script: {setup_file}")
         except Exception as e:
             self.logger.error(f"Error executing setup script {setup_file}: {str(e)}")
+            return False
+        return True

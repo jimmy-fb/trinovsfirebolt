@@ -19,6 +19,7 @@ class SnowflakeConnector:
         self.config = config
         self._validate_config()
         self._conn = None
+        self._cursor = None
 
     def _validate_config(self) -> None:
         """Validate that required configuration parameters are present."""
@@ -30,22 +31,17 @@ class SnowflakeConnector:
     @contextmanager
     def connect(self):
         """Context manager for database connections."""
-        try:
-            if not self._conn:
-                self._conn = snowflake.connector.connect(
-                    account=self.config['account'],
-                    user=self.config['user'],
-                    password=self.config['password'],
-                    warehouse=self.config.get('warehouse'),
-                    database=self.config.get('database'),
-                    schema=self.config.get('schema'),
-                    telemetry=False
-                )
-            yield self._conn
-        finally:
-            if self._conn:
-                self._conn.close()
-                self._conn = None
+        if not self._conn:
+            self._conn = snowflake.connector.connect(
+                account=self.config['account'],
+                user=self.config['user'],
+                password=self.config['password'],
+                warehouse=self.config.get('warehouse'),
+                database=self.config.get('database'),
+                schema=self.config.get('schema'),
+                telemetry=False
+            )
+            self._cursor = self._conn.cursor(snowflake.connector.DictCursor)
 
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """
@@ -58,20 +54,21 @@ class SnowflakeConnector:
         Returns:
             List[Dict]: Query results as a list of dictionaries
         """
-        with self.connect() as conn:
-            cursor = conn.cursor(snowflake.connector.DictCursor)
-            try:
-                cursor.execute(query, params or {})
-                return cursor.fetchall()
-            finally:
-                cursor.close()
+        if not self._conn or not self._cursor:
+            self.connect()
+
+        try:
+            self._cursor.execute(query, params or {})
+            return self._cursor.fetchall()
+        except Exception as e:
+            raise Exception(f"Error executing query: {str(e)}")
 
 
     def close(self) -> None:
         """Close the Snowflake connection if it exists."""
         if hasattr(self, 'cursor') and self.cursor:
-            self.cursor.close()
+            self._cursor.close()
         if hasattr(self, 'conn') and self.conn:
-            self.conn.close()
-            self.conn = None
-            self.cursor = None
+            self._conn.close()
+            self._conn = None
+            self._cursor = None
