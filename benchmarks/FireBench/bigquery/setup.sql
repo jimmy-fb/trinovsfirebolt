@@ -1,0 +1,109 @@
+
+CREATE SCHEMA IF NOT EXISTS `FIREBENCH_DS`
+OPTIONS(location='us-east1');
+
+
+-- Table: RANKINGS
+CREATE TABLE IF NOT EXISTS FIREBENCH_DS.rankings (
+  PAGEURL STRING NOT NULL,
+  PAGERANK INT64,
+  AVGDURATION INT64
+)
+PARTITION BY DATE(_PARTITIONTIME)
+CLUSTER BY PAGEURL;
+
+-- Table: USERVISITS
+CREATE TABLE IF NOT EXISTS FIREBENCH_DS.uservisits (
+  SOURCEIP STRING NOT NULL,
+  DESTINATIONURL STRING NOT NULL,
+  VISITDATE DATE NOT NULL,
+  ADREVENUE FLOAT64 NOT NULL,
+  USERAGENT STRING NOT NULL,
+  COUNTRYCODE STRING NOT NULL,
+  LANGUAGECODE STRING NOT NULL,
+  SEARCHWORD STRING NOT NULL,
+  DURATION INT64 NOT NULL
+)
+PARTITION BY DATE_TRUNC(visitdate, YEAR)
+CLUSTER BY visitdate, destinationurl, sourceip;
+
+-- Table: AGENTS
+CREATE TABLE IF NOT EXISTS FIREBENCH_DS.agents (
+  ID INT64 NOT NULL,
+  AGENTNAME STRING,
+  OPERATINGSYSTEM STRING,
+  DEVICEARCH STRING,
+  BROWSER STRING
+);
+
+-- Table: IPADDRESSES
+CREATE TABLE IF NOT EXISTS FIREBENCH_DS.ipaddresses (
+  IP STRING NOT NULL,
+  AUTONOMOUSSYSTEM INT64 NOT NULL,
+  ASNAME STRING
+)
+CLUSTER BY IP;
+
+-- Table: SEARCHWORDS
+CREATE TABLE IF NOT EXISTS FIREBENCH_DS.searchwords (
+  WORD STRING NOT NULL,
+  WORD_HASH INT64 NOT NULL,
+  WORD_ID INT64 NOT NULL,
+  FIRSTSEEN DATE NOT NULL,
+  IS_TOPIC BOOL NOT NULL
+);
+
+-- External Table: RANKINGS
+CREATE OR REPLACE EXTERNAL TABLE FIREBENCH_DS.ext_rankings
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://benchmark-amplab/dataapp/1tb/rankings/*']
+);
+
+-- External Table: USERVISITS
+CREATE OR REPLACE EXTERNAL TABLE FIREBENCH_DS.ext_uservisits
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://benchmark-amplab/dataapp/1tb/gz-parquet/*']
+);
+
+-- External Table: AGENTS
+CREATE OR REPLACE EXTERNAL TABLE FIREBENCH_DS.ext_agents
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://benchmark-amplab/dataapp/1tb/dimensions/agents/*']
+);
+
+-- External Table: IPADDRESSES
+CREATE OR REPLACE EXTERNAL TABLE FIREBENCH_DS.ext_ipaddresses
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://benchmark-amplab/dataapp/1tb/dimensions/ipaddresses/*']
+);
+
+-- External Table: SEARCHWORDS
+CREATE OR REPLACE EXTERNAL TABLE FIREBENCH_DS.ext_searchwords
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://benchmark-amplab/dataapp/1tb/dimensions/searchwords/*']
+);
+
+-- Load data into RANKINGS
+INSERT INTO FIREBENCH_DS.rankings
+SELECT * FROM FIREBENCH_DS.ext_rankings;
+
+-- Load data into USERVISITS
+INSERT INTO FIREBENCH_DS.uservisits
+SELECT * FROM FIREBENCH_DS.ext_uservisits;
+
+-- Load data into AGENTS
+INSERT INTO FIREBENCH_DS.agents
+SELECT * FROM FIREBENCH_DS.ext_agents;
+
+-- Load data into IPADDRESSES
+INSERT INTO FIREBENCH_DS.ipaddresses
+SELECT * FROM FIREBENCH_DS.ext_ipaddresses;
+
+-- Load data into SEARCHWORDS
+INSERT INTO FIREBENCH_DS.searchwords
+SELECT * FROM FIREBENCH_DS.ext_searchwords;

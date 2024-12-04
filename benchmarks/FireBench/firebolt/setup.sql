@@ -13,17 +13,18 @@ CREATE TABLE "uservisits" ("sourceip" text NOT NULL,
 "countrycode" text NOT NULL,
 "languagecode" text NOT NULL,
 "searchword" text NOT NULL, 
-"duration" integer NOT NULL) PRIMARY INDEX "visitdate",
-"destinationurl",
-"sourceip";
+"duration" integer NOT NULL) 
+PRIMARY INDEX "visitdate", "destinationurl", "sourceip";
 
 CREATE TABLE "ipaddresses" ("ip" text NOT NULL,
 "autonomoussystem" integer NOT NULL,
-"asname" text NOT NULL) PRIMARY INDEX "ip";
+"asname" text NOT NULL)
+PRIMARY INDEX "ip";
 
 CREATE TABLE "rankings" ("pageurl" text NOT NULL,
 "pagerank" integer NULL,
-"avgduration" integer NOT NULL) PRIMARY INDEX "pageurl";
+"avgduration" integer NOT NULL) 
+PRIMARY INDEX "pageurl";
 
 CREATE TABLE "agents" ("id" integer NOT NULL,
 "agentname" text NOT NULL,

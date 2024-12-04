@@ -19,6 +19,8 @@ from .connectors import (
 from .exporters import CSVExporter, VisualExporter
 
 
+ITERATIONS_PER_QUERY = 5
+
 @dataclass
 class QueryResult:
     query_number: int
@@ -205,7 +207,7 @@ class BenchmarkRunner:
 
     def run_benchmark(self) -> Dict:
         results = {}
-        num_iterations = 1  # Run each query multiple times to get a distribution
+        num_iterations = ITERATIONS_PER_QUERY  # Run each query multiple times to get a distribution
         
         for vendor in self.vendors:
             if vendor not in self.connectors:

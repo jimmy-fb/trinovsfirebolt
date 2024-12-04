@@ -59,7 +59,7 @@ class VisualExporter(BenchmarkExporter):
         plt.legend()  # Add a legend to identify vendors
         plt.tight_layout()
 
-        visual_file_path = os.path.join(output_dir, 'visual_results.png')
-        plt.savefig(visual_file_path)
+        visual_file_path = os.path.join(output_dir, 'visual_results.pdf')
+        plt.savefig(visual_file_path, dpi=400)
         plt.close()
         print(f"Visualization saved to {visual_file_path}")
