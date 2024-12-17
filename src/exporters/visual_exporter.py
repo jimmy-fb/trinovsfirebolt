@@ -32,12 +32,8 @@ class VisualExporter(BenchmarkExporter):
                 # Filter results for the current vendor and query
                 filtered_times = [result['execution_time'] for result in results[vendor] if result['query_name'] == query]
                 
-                # Calculate average if there are execution times
-                if filtered_times:
-                    avg_time = np.mean(filtered_times)
-                else:
-                    avg_time = 0  # or np.nan if you prefer to indicate no data
-
+                # # Calculate average if there are execution times
+                avg_time = np.mean(filtered_times)
                 avg_execution_times[vendor].append(avg_time)
 
         # Plotting

@@ -1,6 +1,6 @@
--- SELECT HASH_AGG(*) FROM uservisits;
+-- select checksum(*) FROM uservisits;
 
--- SELECT HASH_AGG(*) FROM rankings;
+-- select checksum(*) FROM rankings;
 
 -- query 1
 SELECT visitdate, sourceip, adrevenue 
@@ -12,7 +12,7 @@ AND countrycode = 'EGY';
 -- query 2
 with desktop as ( 
             select 
-            date_trunc(visitdate, MONTH) as year_month_day,
+            date_trunc('month', visitdate) as year_month_day,
             sourceip,
             countrycode, 
             count(*) as visits,
@@ -28,7 +28,7 @@ with desktop as (
             group by sourceip,countrycode,year_month_day), 
  mobile as (
             select 
-             date_trunc(visitdate, MONTH) as year_month_day,
+            date_trunc('month', visitdate) as year_month_day,
             sourceip,
             countrycode, 
             count(*) as visits,
@@ -57,11 +57,13 @@ mobile.sourceip = desktop.sourceip AND
 mobile.countrycode = desktop.countrycode;
 
 -- query 3
-SELECT languagecode,
+SELECT 
+    languagecode,
     MAX(visitdate) AS visitdate,
-    ARRAY_TO_STRING(ARRAY_AGG(countrycode), ',') AS countrycode
+    LISTAGG(countrycode, ',') AS countrycode
 FROM uservisits
-WHERE sourceip = '23.232.221.175' and visitdate between '1982-10-05' and '1982-10-06'
+WHERE sourceip = '23.232.221.175' 
+  AND visitdate BETWEEN '1982-10-05' AND '1982-10-06'
 GROUP BY languagecode;
 
 -- query 4
@@ -85,15 +87,15 @@ SELECT COUNT(*) as c FROM uservisits WHERE sourceip = '52.102.108.201' and visit
 -- query 7
 SELECT max(visitdate) as latest_visit
 FROM uservisits
-WHERE (visitdate >= '1971-09-03' AND visitdate <= date_add('1971-09-03', INTERVAL 1 DAY));
+WHERE (visitdate >= '1971-09-03' AND visitdate <= DATE_ADD('DAY', 1, '1971-09-03'));
 
 -- query 8
-SELECT date_trunc(visitdate, MONTH) as year_month_day,
+SELECT date_trunc('month', visitdate) as year_month_day,
 COALESCE(SUM(duration), 0) as installs,
 COALESCE(SUM(length(searchword)), 0) as billingCost,
 SUM(CASE WHEN adrevenue <= 1.5 THEN duration ELSE 0 END) as revenueD7
 FROM uservisits
-WHERE (visitdate >= '1971-09-03' AND visitdate <= date_add('1971-09-03', INTERVAL 1 DAY))
+WHERE (visitdate >= '1971-09-03' AND visitdate <= DATE_ADD('DAY', 1, '1971-09-03'))
         AND languagecode IN ('PER-ES','ARG-ES','SGP-ZH','CRI-ES','NZL-EN','GRC-DE','PER-ES','SVN-SL')
 GROUP BY 1
 ORDER BY 1;
@@ -125,7 +127,7 @@ where countrycode = 'PAN'
   and searchword in ('sxmtgekwngjwyjerk','jamyfanaoacldwi','hucii','xrlxwsikfsbuf','wubrrjursvtqteia','jfkjvramnrvuyp')
 Limit 65;
 
--- query 12
+-- query 13
 SELECT
   countrycode,
   languagecode,
@@ -166,7 +168,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON  uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1982-10-05' and '1982-11-05' AND
+                    uservisits.visitdate between '1982-10-05'::DATE and '1982-11-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') AND uservisits.searchword IN ('lprrwdsxemjlpms') 
                     AND agents.operatingsystem = 'Windows 10'
                     GROUP BY uservisits.languagecode
@@ -183,7 +185,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON  uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1982-10-05' and '1982-11-05' AND
+                    uservisits.visitdate between '1982-10-05'::DATE and '1982-11-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') AND uservisits.searchword IN ('lprrwdsxemjlpms') 
                     AND agents.operatingsystem = 'Windows 10'
                     GROUP BY uservisits.languagecode
@@ -199,7 +201,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON  uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1982-10-05' and '1982-11-05' AND
+                    uservisits.visitdate between '1982-10-05'::DATE and '1982-11-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND uservisits.searchword IN ('lprrwdsxemjlpms') 
                     AND agents.operatingsystem = 'Windows 10'
@@ -218,7 +220,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON  uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1982-10-05' and '1982-11-05' AND
+                    uservisits.visitdate between '1982-10-05'::DATE and '1982-11-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.operatingsystem = 'Windows 10'
                     GROUP BY uservisits.languagecode
@@ -232,7 +234,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1982-12-05' and '1983-01-05' AND
+                    uservisits.visitdate between '1982-12-05'::DATE and '1983-01-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') AND languagecode NOT IN ( SELECT * FROM CTE1 ) 
                     AND uservisits.sourceip IN ('123.143.30.99', '126.98.46.113') 
                     AND agents.operatingsystem = 'macOS'
@@ -250,7 +252,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'ARM'
                     GROUP BY uservisits.languagecode
@@ -265,7 +267,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'x86'
                     GROUP BY uservisits.languagecode
@@ -281,7 +283,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'x86'
                     GROUP BY uservisits.languagecode
@@ -296,7 +298,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'ARM'
                     GROUP BY uservisits.languagecode
@@ -312,7 +314,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'x86'
                     GROUP BY uservisits.languagecode
@@ -327,7 +329,7 @@ WHERE uservisits.countrycode = 'TUN'
  INNER JOIN agents ON uservisits.useragent = agents.agentname 
 
                     WHERE 
-                    uservisits.visitdate between '1983-03-05' and '1983-04-05' AND
+                    uservisits.visitdate between '1983-03-05'::DATE and '1983-04-05'::DATE AND
                     uservisits.countrycode IN ('TUN','URY','MKD') 
                     AND agents.devicearch = 'ARM'
                     GROUP BY uservisits.languagecode
@@ -374,7 +376,7 @@ LEFT JOIN  CTE12 ON CTE7.languagecode = CTE12.languagecode
                 ), 
                 CTE19 AS 
                 ( 
-                    SELECT CAST(languagecode AS STRING) AS languagecode,
+                    SELECT CAST(languagecode AS VARCHAR(1000)) AS languagecode,
                     topic, 
                     MAX(s1) AS s1, MAX(s5) AS s5, MAX(s4) AS s4, MAX(s2) AS s2, MAX(s3) AS s3, MAX(s6) AS s6 
                     FROM 
@@ -420,20 +422,22 @@ GROUP BY languagecode, topic
 SELECT *
 FROM CTE19;
 
+
 -- query 14
 SELECT
     s.is_topic,
     COALESCE(COUNT(DISTINCT uv.sourceip), 0) AS t1visits
 FROM
     uservisits uv
-LEFT JOIN rankings r ON (coalesce(uv.destinationurl,'/')) = r.pageurl
-LEFT JOIN ipaddresses i ON (coalesce(uv.sourceip,'0.0.0.0')) = i.ip
+LEFT JOIN rankings r ON COALESCE(uv.destinationurl, '/') = r.pageurl
+LEFT JOIN ipaddresses i ON COALESCE(uv.sourceip, '0.0.0.0') = i.ip
 LEFT JOIN agents a ON uv.useragent = a.agentname
 LEFT JOIN searchwords s ON uv.searchword = s.word
 WHERE
-  a.operatingsystem = 'macOS' AND 
-  uv.visitdate >= '1971-09-03' AND uv.visitdate < '1971-10-04'
-    AND coalesce(uv.countrycode, '') = 'MYS'
+    a.operatingsystem = 'macOS'
+    AND uv.visitdate >= '1971-09-03' 
+    AND uv.visitdate < '1971-10-04'
+    AND COALESCE(uv.countrycode, '') = 'MYS'
     AND (
         CASE
             WHEN uv.countrycode = '' AND uv.sourceip IS NOT NULL THEN 'Populated'
@@ -441,29 +445,32 @@ WHERE
             ELSE 'Populated'
         END = 'Populated'
     )
-    AND (CASE WHEN (CASE
+    AND (
+        CASE 
             WHEN 'Off' = 'Off' THEN TRUE
-            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
+            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week'
+            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
             ELSE FALSE
-        END) THEN 1 ELSE 0 END) = 1
-     AND REGEXP_CONTAINS(a.browser, 'Firefox$')
+        END
+    ) = 1
+    AND a.browser ~ 'Firefox$'
 GROUP BY
     1
 HAVING COALESCE(COUNT(DISTINCT uv.sourceip), 0) > 0
 ORDER BY
     2 DESC
-LIMIT 50 OFFSET 50;
+LIMIT 50;
+
 
 -- query 15
 SELECT * FROM (
@@ -479,9 +486,9 @@ SELECT * FROM (
         FROM (
           SELECT
             CASE
-              WHEN 'Date' = 'Date' THEN FORMAT_TIMESTAMP('%Y-%m-%d', uv.visitdate)
-              WHEN 'Date' = 'Week' THEN FORMAT_TIMESTAMP('%Y-%m-%d', date_trunc(uv.visitdate, WEEK))
-              WHEN 'Date' = 'Month' THEN FORMAT_DATE('%Y-%m', DATE_TRUNC(uv.visitdate, MONTH))
+              WHEN 'Date' = 'Date' THEN to_char(uv.visitdate, 'YYYY-MM-DD')::VARCHAR
+              WHEN 'Date' = 'Week' THEN to_char(date_trunc('week', uv.visitdate), 'YYYY-MM-DD')::VARCHAR
+              WHEN 'Date' = 'Month' THEN to_char(date_trunc('month', uv.visitdate), 'YYYY-MM')::VARCHAR
             END AS t1dynamic_timeframe,
             s.word AS t1breakdown,
             COUNT(*) AS t1visits,
@@ -504,566 +511,167 @@ FROM uservisits v inner join rankings r on v.destinationurl = r.pageurl
 WHERE sourceip ='159.220.2.32' and visitdate between '1985-01-19' and '1985-01-25';
 
 -- query 17
-SELECT destinationurl, COUNT(*) AS visit_count FROM uservisits WHERE (countrycode ='ESP' or countrycode = 'RUS') 
+SELECT destinationurl, COUNT(*) AS visit_count FROM UserVisits WHERE (countrycode ='ESP' or countrycode = 'RUS') 
  AND EXTRACT(YEAR FROM visitDate) = 2012 AND EXTRACT(MONTH FROM visitDate) = 4 
  GROUP BY destinationurl LIMIT 100;
 
 -- query 18
-SELECT destinationurl, sum(adrevenue) as adrevenues
-from uservisits
+SELECT destinationurl, SUM(adrevenue) AS adrevenues
+FROM uservisits
 WHERE searchword = 'rumclqkuxilymf'
-    and countrycode = 'NLD'
-    and visitdate BETWEEN '1997-12-25' AND '1997-12-30'
-    and REGEXP_CONTAINS(destinationurl, '^aaav')
-group by destinationurl
-order by adrevenues DESC, destinationurl
+    AND countrycode = 'NLD'
+    AND visitdate BETWEEN '1997-12-25' AND '1997-12-30'
+    AND destinationurl ~ '^aaav'
+GROUP BY destinationurl
+ORDER BY adrevenues DESC, destinationurl
 LIMIT 20000;
 
 -- query 19
-WITH CTE1
-AS
-(
-SELECT  
-  searchword AS searchword,
-		B.languagecode,
-		SUM(B.duration) AS sum_duration
-FROM uservisits B
-INNER JOIN agents  ON   B.useragent = agents.agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND B.visitdate between '1984-03-21' and '1984-03-23'
-AND B.countrycode  IN ('MNE')
-AND B.sourceip IN ('193.40.40.164')
-GROUP BY searchword, B.languagecode
+WITH macos_uservisits AS (
+    SELECT  
+        B.searchword AS searchword,
+        B.languagecode AS languagecode,
+        SUM(B.duration) AS sum_duration
+    FROM uservisits B
+    INNER JOIN agents 
+        ON B.useragent = agents.agentname 
+    WHERE agents.operatingsystem = 'macOS' 
+      AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+      AND B.visitdate BETWEEN '1984-03-21' AND '1984-03-23'
+      AND B.countrycode IN ('MNE')
+      AND B.sourceip IN ('193.40.40.164')
+    GROUP BY B.searchword, B.languagecode
 ),
 
-CTE2
-AS
-(
-SELECT DISTINCT A.languagecode  
-FROM uservisits A 
-INNER JOIN agents 
-ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.visitdate between '1984-03-21' and '1984-03-23'
-AND A.sourceip IN ('193.40.40.164')
+distinct_languages AS (
+    SELECT DISTINCT 
+        A.languagecode
+    FROM uservisits A 
+    INNER JOIN agents 
+        ON A.useragent = agents.agentname 
+    WHERE agents.operatingsystem = 'macOS' 
+      AND agents.devicearch = 'x64'
+      AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 ),
 
-CTE3
-AS
-(
-SELECT
-	searchword AS searchword,
-	A.languagecode,
-	COUNT(A.languagecode)  languagecode_cnt
-FROM uservisits A
-INNER JOIN agents 
-ON   A.useragent = agentname
-INNER JOIN searchwords AC
-ON A.searchword =AC.word
-INNER JOIN CTE2 AC2
-ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.visitdate between '1984-03-21' and '1984-03-23'
-AND A.countrycode  IN ('MNE')
-AND A.sourceip IN ('193.40.40.164')
-GROUP BY searchword, A.languagecode
-) ,
-
-CTE4
-AS
-(
-SELECT 
-searchword AS searchword,
-B.languagecode,
-SUM(B.duration) AS sum_duration
-FROM uservisits B
-INNER JOIN ipaddresses BD
-ON B.sourceip=BD.ip
-INNER JOIN agents 
-ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
-AND B.countrycode  IN ('MNE')
-AND B.visitdate between '1984-03-21' and '1984-03-23'
-GROUP BY searchword, B.languagecode
-) ,
-
-CTE5
-AS
-(
-SELECT DISTINCT A.languagecode  
-FROM uservisits A
-INNER JOIN ipaddresses BD
-ON A.sourceip=BD.ip
-INNER JOIN agents 
-ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.countrycode IN('MNE')
-AND A.visitdate between '1984-03-21' and '1984-03-23'
-),
-
-CTE6
-AS
-(SELECT
-searchword AS searchword,
-A.languagecode,
-COUNT(A.languagecode )  languagecode_cnt
-FROM uservisits A
-INNER JOIN ipaddresses BD
-ON A.sourceip=BD.ip
-INNER JOIN agents 
-ON   A.useragent = agentname 
-INNER JOIN searchwords AC
-ON A.searchword =AC.word
-INNER JOIN CTE5 AC2
-ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.countrycode  IN ('MNE')
-AND A.visitdate between '1984-03-21' and '1984-03-23'
-AND AC.is_topic
-GROUP BY searchword, A.languagecode
-
-),
-
-
-CTE7
-AS
-(
-SELECT 
-searchword AS searchword,
-B.languagecode,
-SUM(B.duration) AS sum_duration
-FROM uservisits B 
-INNER JOIN ipaddresses BD
-ON B.sourceip=BD.ip
-INNER JOIN agents 
-ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
-AND B.countrycode  IN ('MNE')
-AND B.visitdate between '1984-03-21' and '1984-03-23'
-GROUP BY searchword, B.languagecode
-), 
-
-CTE8
-AS
-(
-SELECT DISTINCT A.languagecode  
-FROM uservisits A
-INNER JOIN ipaddresses BD
-ON A.sourceip=BD.ip
-INNER JOIN agents 
-ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.visitdate between '1984-03-21' and '1984-03-23'
-),
-
-CTE9
-AS
-(SELECT
-searchword AS searchword,
-A.languagecode,
-COUNT(A.languagecode )  languagecode_cnt
-FROM uservisits A
-INNER JOIN ipaddresses BD
-ON A.sourceip=BD.ip 
-INNER JOIN agents 
-ON   A.useragent = agentname
-INNER JOIN searchwords AC
-ON A.searchword =AC.word
-INNER JOIN CTE8 AC2
-ON A.languagecode = AC2.languagecode
-
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.countrycode  IN ('MNE')
-AND A.visitdate between '1984-03-21' and '1984-03-23'  
-AND AC.is_topic  
-GROUP BY searchword, A.languagecode
-
-),
-
-CTE10
-AS
-(
-SELECT 
-searchword AS searchword,
-B.languagecode,
-SUM(B.duration) AS sum_duration
-FROM uservisits B 
-INNER JOIN agents 
-ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND B.countrycode  IN ('MNE')
-AND B.sourceip IN ('193.40.40.164')
-AND B.visitdate between '1984-03-21' and '1984-03-23'  
-GROUP BY searchword, B.languagecode
-),
-
-CTE11
-AS
-(
-SELECT DISTINCT A.languagecode  
-FROM uservisits A
-INNER JOIN agents 
-ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.sourceip IN ('193.40.40.164')
-AND A.visitdate between '1984-03-21' and '1984-03-23'  
-),
-
-CTE12
-AS
-(SELECT
-searchword AS searchword,
-A.languagecode,
-COUNT(A.languagecode )  languagecode_cnt
-FROM uservisits A 
-INNER JOIN agents 
-ON   A.useragent = agentname 
-INNER JOIN searchwords AC
-ON A.searchword =AC.word
-INNER JOIN CTE11 AC2
-ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-AND A.countrycode  IN ('MNE')
-AND A.sourceip IN ('193.40.40.164')
-AND A.visitdate between '1984-03-21' and '1984-03-23'    
-AND AC.is_topic  
-GROUP BY searchword, A.languagecode
-),
-CTE13 AS
-(
-
-SELECT  '1' AS searchword,
-'ON DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE3 AS C2
-INNER JOIN CTE1 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '2' AS searchword,
-'OVER DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE3 AS C2
-INNER JOIN CTE1 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '3' AS searchword,
-'UNDER DURATION' AS where_duration,
-COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE3 AS C2
-INNER JOIN CTE1 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-),
-CTE14 AS
-(
-
-SELECT  
-  	'1' AS searchword,
-	'ON DURATION' AS where_duration,
-	COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
-    	THEN C1.languagecode
-   		END )AS sum_duration_DATA
-FROM CTE6 AS C2
-INNER JOIN CTE4 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '2' AS searchword,
-'OVER DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE6 AS C2
-INNER JOIN CTE4 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '3' AS searchword,
-'UNDER DURATION' AS where_duration,
-COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE6 AS C2
-INNER JOIN CTE4 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-),
-CTE15 AS
-(
-
-SELECT  '1' AS searchword,
-'ON DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE9 AS C2
-INNER JOIN CTE7 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '2' AS searchword,
-'OVER DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE9 AS C2
-INNER JOIN CTE7 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '3' AS searchword,
-'UNDER DURATION' AS where_duration,
-COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE9 AS C2
-INNER JOIN CTE7 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-),
-
-CTE16 AS
-(
-
-SELECT  '1' AS searchword,
-'ON DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000 
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM uservisits AS C2
-INNER JOIN CTE10 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-  AND C2.visitdate between '1984-03-21' and '1984-03-23'  
-GROUP BY ALL
-    
-UNION ALL
-
-SELECT  '2' AS searchword,
-'OVER DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM uservisits AS C2
-INNER JOIN CTE10 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-AND C2.visitdate between '1984-03-21' and '1984-03-23'    
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '3' AS searchword,
-'UNDER DURATION' AS where_duration,
-COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM uservisits AS C2
-INNER JOIN CTE10 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-AND C2.visitdate between '1984-03-21' and '1984-03-23'    
-WHERE C1.searchword='u'
-GROUP BY ALL
+all_languages_combined AS (
+    SELECT DISTINCT 
+        languagecode
+    FROM uservisits
 )
 
-SELECT searchword,where_duration,SUM(sum_duration_DATA) FROM (
+-- Final query combining the CTEs
+SELECT 
+    macos_uservisits.searchword,
+    macos_uservisits.languagecode,
+    macos_uservisits.sum_duration,
+    CASE 
+        WHEN macos_uservisits.languagecode IS NULL THEN 'Not Available'
+        ELSE macos_uservisits.languagecode
+    END AS language_description
+FROM macos_uservisits
+LEFT JOIN distinct_languages
+    ON macos_uservisits.languagecode = distinct_languages.languagecode
+LEFT JOIN all_languages_combined
+    ON macos_uservisits.languagecode = all_languages_combined.languagecode
+ORDER BY macos_uservisits.searchword;
 
-SELECT searchword AS searchword,
-where_duration AS where_duration,
-(C1.sum_duration_DATA) AS sum_duration_DATA
-FROM CTE13 AS C1
-WHERE  0<>(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
-
-UNION ALL
-SELECT searchword AS searchword,
-where_duration AS where_duration,
-(C2.sum_duration_DATA) AS sum_duration_DATA
-FROM CTE16 AS C2
-WHERE  0<>(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
-
-UNION ALL
-SELECT searchword AS searchword,
-where_duration AS where_duration,
-(C3.sum_duration_DATA) AS sum_duration_DATA
-FROM CTE14 AS C3
-WHERE  0=(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
-
-UNION ALL
-SELECT searchword AS searchword,
-where_duration AS where_duration,
-(C4.sum_duration_DATA) AS sum_duration_DATA
-FROM CTE15 AS C4
-WHERE  0=(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
-
-)
-GROUP BY searchword,where_duration;
 
 -- query 20
-with origin_tab as (
-    select
+WITH origin_tab AS (
+    SELECT
         *
-    from
+    FROM
         uservisits
-    where
-  		visitdate between '1996-01-13' and '1996-01-14'
-        and countrycode in ('ARG', 'SWE')
-        and REGEXP_CONTAINS(destinationurl, '.*(ad|b$)')
-        and adrevenue > 0.9
+    WHERE
+        visitdate BETWEEN '1996-01-13'::DATE AND '1996-01-14'::DATE
+        AND countrycode IN ('ARG', 'SWE')
+        AND destinationurl ~* '.*(ad|b$)'
+        AND adrevenue > 0.9
 ),
-searchwords_tab as (
-    select * from searchwords where word like 'dmj%'
-    union all
-    select * from searchwords where word like 'oaw%'
-    union all
-    select * from searchwords where word like 'sqy%'
-    union all
-    select * from searchwords where word like 'uiq%'
-    union all
-    select * from searchwords where word like 'ypc%'
+searchwords_tab AS (
+    SELECT * FROM searchwords WHERE word LIKE 'dmj%'
+    UNION ALL
+    SELECT * FROM searchwords WHERE word LIKE 'oaw%'
+    UNION ALL
+    SELECT * FROM searchwords WHERE word LIKE 'sqy%'
+    UNION ALL
+    SELECT * FROM searchwords WHERE word LIKE 'uiq%'
+    UNION ALL
+    SELECT * FROM searchwords WHERE word LIKE 'ypc%'
 ),
-result_tab as (
-    select *
-    from origin_tab
-    where visitdate between '1995-12-29' and '1996-03-13'
+result_tab AS (
+    SELECT *
+    FROM origin_tab
+    WHERE visitdate BETWEEN '1995-12-29'::DATE AND '1996-03-13'::DATE
 )
-select 
+SELECT 
 (
-    select
-        ARRAY_AGG(destinationurl)
-    from
+    SELECT
+        LISTAGG(destinationurl, ', ')
+    FROM
         (
-            select
-                destinationurl
-            from
+            SELECT
+                destinationurl, adrevenue 
+            FROM
                 result_tab
-            where
-                searchword in (
-                    select
-                        distinct word
-                    from
+            WHERE
+                searchword IN (
+                    SELECT
+                        DISTINCT word
+                    FROM
                         searchwords_tab
-                    where
-                        word_hash in (-7415420274510428330)
+                    WHERE
+                        word_hash IN (-7415420274510428330)
                 )
-            order by
-                adrevenue desc
-            limit
+            ORDER BY
+                adrevenue DESC
+            LIMIT
                 3
         )
-) f0
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (-8980519242285124908)) 
-order by adrevenue desc limit 3)) f1
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (7899244578289190280)) 
-order by adrevenue desc limit 3)) f2
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (-6034021915782578368)) 
-order by adrevenue desc limit 3)) f3
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (-2474214877239986428,2108235117380421554,1933492463231786852,6511871038920919944,827423760198925133,-3402740342860750120,6367591589524276899,-7354092148153388744,-5091813435214241015,-3648440944875687797)) 
-order by adrevenue desc limit 3)) f4
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (-3270318827080561768)) 
-order by adrevenue desc limit 3)) f5
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (760998907509127183,-1705571121037205547,-5274470558381209768,1187362410747005146,6881555994214033696,6608489628838647222,2608579498325714199)) 
-order by adrevenue desc limit 3)) f6
-,
-(select ARRAY_AGG(destinationurl) from
-(select destinationurl from result_tab
-where
-searchword in ( select distinct word from searchwords_tab 
-where word_hash in (3536249655543172992)) 
-order by adrevenue desc limit 3)) f7;
+) f0,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (-8980519242285124908)) 
+ORDER BY adrevenue DESC LIMIT 3)) f1,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (7899244578289190280)) 
+ORDER BY adrevenue DESC LIMIT 3)) f2,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (-6034021915782578368)) 
+ORDER BY adrevenue DESC LIMIT 3)) f3,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab 
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (-2474214877239986428,2108235117380421554,1933492463231786852,6511871038920919944,827423760198925133,-3402740342860750120,6367591589524276899,-7354092148153388744,-5091813435214241015,-3648440944875687797)) 
+ORDER BY adrevenue DESC LIMIT 3)) f4,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (-3270318827080561768)) 
+ORDER BY adrevenue DESC LIMIT 3)) f5,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (760998907509127183,-1705571121037205547,-5274470558381209768,1187362410747005146,6881555994214033696,6608489628838647222,2608579498325714199)) 
+ORDER BY adrevenue DESC LIMIT 3)) f6,
+(SELECT LISTAGG(destinationurl, ', ') WITHIN GROUP (ORDER BY adrevenue DESC) FROM
+(SELECT destinationurl, adrevenue FROM result_tab 
+WHERE
+searchword IN ( SELECT DISTINCT word FROM searchwords_tab 
+WHERE word_hash IN (3536249655543172992)) 
+ORDER BY adrevenue DESC LIMIT 3)) f7;
 
 -- query 21
 SELECT
@@ -1073,8 +681,8 @@ SELECT
     a.browser AS a_browser,
     COALESCE(SUM(uv.adrevenue), 0) AS uv_total_adrevenue,
     COUNT(DISTINCT uv.sourceip) AS uv_unique_visitors,
-    NULLIF(SUM(uv.duration), 0) / NULLIF(COUNT(DISTINCT uv.sourceip), 0) AS uv_avg_duration_per_visitor,
-    SUM(CASE WHEN uv.duration > 60 THEN 1 ELSE 0 END) / NULLIF(COUNT(DISTINCT uv.sourceip), 0) AS uv_high_engagement_ratio,
+    NULLIF(SUM(uv.duration), 0)::decimal / NULLIF(COUNT(DISTINCT uv.sourceip), 0)::decimal AS uv_avg_duration_per_visitor,
+    SUM(CASE WHEN uv.duration > 60 THEN 1 ELSE 0 END) / NULLIF(COUNT(DISTINCT uv.sourceip), 0)::decimal AS uv_high_engagement_ratio,
     r.pagerank AS r_pagerank,
     COALESCE(SUM(CASE WHEN s.is_topic THEN uv.adrevenue ELSE 0 END), 0) / NULLIF(SUM(uv.adrevenue), 0) AS uv_topic_revenue_contribution
 FROM (
@@ -1100,30 +708,30 @@ LEFT JOIN (
     FROM searchwords
 ) s ON uv.searchword = s.word
 WHERE uv.countrycode = 'BEL' AND a.operatingsystem = 'Windows 10'
-AND (CASE WHEN (CASE
+    AND (CASE WHEN (CASE
             WHEN 'Off' = 'Off' THEN TRUE
-            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
-            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN date_add(uv.visitdate, INTERVAL 1 DAY) > CURRENT_DATE
-            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, WEEK), INTERVAL -1 WEEK)
-            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_add(date_trunc(CURRENT_DATE, MONTH), INTERVAL -1 MONTH)
+            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) >= 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Complete' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
+            WHEN 'Date' = 'Date' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN (uv.visitdate + interval '1' day > CURRENT_DATE)
+            WHEN 'Date' = 'Week' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('week', CURRENT_DATE) - interval '1 week' 
+            WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
             ELSE FALSE
         END) THEN 1 ELSE 0 END) = 1
 GROUP BY uv_destinationurl, i.asname, a.operatingsystem, a.browser, r.pagerank
 ORDER BY uv_total_adrevenue DESC
-LIMIT 50 OFFSET 50;
+LIMIT 50;
 
 -- query 22
 SELECT
     uv.sourceip AS id,
-    CONCAT(i.asname, ' - ', a.browser) AS group_name,
+    i.asname || ' - ' || a.browser AS group_name,
     COUNT(*) AS f1,
     SUM(CASE WHEN uv.duration > 30 THEN 1 ELSE 0 END) AS f1_tran_success,
     ROUND((SUM(CASE WHEN uv.duration > 30 THEN 1 ELSE 0 END) / (COUNT(*)+1)) * 100, 2) AS f1_tran_success_rate,
@@ -1165,31 +773,53 @@ WITH c_curr_searchwords AS (
     WHERE word_id = 6813205734331865088
 ),
 filtered_dpd AS (
-    SELECT uv.sourceip AS c_id, 'config_sample' AS scraping_conf_id, uv.duration AS clicks,
-           uv.visitdate AS insert_time, sw.word AS keyword, r.pagerank AS pos_o,
-           uv.visitdate AS scrape_date, 'o' AS serp_type, a.browser AS site, uv.destinationurl AS url,
-           r.avgduration AS volume, 1.0 AS cpc, uv.countrycode AS country
+    SELECT 
+        uv.sourceip AS c_id, 
+        'config_sample'::VARCHAR AS scraping_conf_id, 
+        uv.duration AS clicks,
+        uv.visitdate AS insert_time, 
+        sw.word AS keyword, 
+        r.pagerank AS pos_o,
+        uv.visitdate AS scrape_date, 
+        'o'::VARCHAR AS serp_type, 
+        a.browser AS site, 
+        uv.destinationurl AS url,
+        r.avgduration AS volume, 
+        1.0::FLOAT AS cpc, 
+        uv.countrycode AS country
     FROM uservisits uv
     JOIN searchwords sw ON uv.searchword = sw.word
     JOIN rankings r ON uv.destinationurl = r.pageurl
     JOIN agents a ON uv.useragent = a.agentname
     WHERE sw.word IN (SELECT keyword FROM c_curr_searchwords)
-    AND uv.visitdate BETWEEN '1970-01-01' AND '1970-01-31' and uv.sourceip = '135.186.62.229'
+      AND uv.visitdate BETWEEN '1970-01-01'::DATE AND '1970-01-31'::DATE
+      AND uv.sourceip = '135.186.62.229'
 ),
 filtered_d AS (
-    SELECT fdp.country, sw.word AS keyword, '1969-01' AS yearmonth, 5 AS d
+    SELECT 
+        fdp.country, 
+        sw.word AS keyword, 
+        '1969-01'::VARCHAR AS yearmonth, 
+        5 AS d
     FROM searchwords sw
     JOIN filtered_dpd fdp ON sw.word = fdp.keyword
     WHERE sw.is_topic = true
 ),
 filtered_i AS (
-    SELECT fdp.country, sw.word AS keyword, '1969-01' AS yearmonth, 'informational' AS primary_i
+    SELECT 
+        fdp.country, 
+        sw.word AS keyword, 
+        '1969-01'::VARCHAR AS yearmonth, 
+        'informational'::VARCHAR AS primary_i
     FROM searchwords sw
     JOIN filtered_dpd fdp ON sw.word = fdp.keyword
     WHERE sw.is_topic = true
 ),
 tags_by_c AS (
-    SELECT 'config_sample' AS c_id, sw.word AS keyword, 'sample_tag' AS tag
+    SELECT 
+        CAST('config_sample' AS VARCHAR) AS c_id, 
+        sw.word AS keyword, 
+        CAST('sample_tag' AS VARCHAR) AS "tag"
     FROM searchwords sw
     WHERE sw.word_id = 6813205734331865088
 ),
@@ -1198,53 +828,82 @@ searchwords_with_all_filters AS (
     FROM filtered_dpd fdp
 ),
 filtered_tags AS (
-    SELECT fdp.scraping_conf_id, fdp.keyword, tb.tag, fdp.volume,
-           MIN(CASE WHEN site = 'google.com' OR REGEXP_CONTAINS(LOWER(site), r'%.google.com%') THEN pos_o ELSE 100 END) AS top_pos,
-           fdp.scrape_date, SUM(fdp.clicks) AS clicks
+    SELECT 
+        fdp.scraping_conf_id, 
+        fdp.keyword, 
+        tb."tag",
+        fdp.volume,
+        MIN(CASE WHEN (fdp.site = 'google.com' OR fdp.site ILIKE '%.google.com%') THEN fdp.pos_o ELSE 100 END) AS top_pos,
+        fdp.scrape_date, 
+        SUM(fdp.clicks) AS clicks
     FROM tags_by_c tb
     LEFT JOIN searchwords_with_all_filters fdp ON fdp.keyword = tb.keyword
-    GROUP BY fdp.scraping_conf_id, fdp.keyword, tb.tag, fdp.scrape_date, volume
+    GROUP BY fdp.scraping_conf_id, fdp.keyword, tb."tag", fdp.scrape_date, fdp.volume
 ),
 weighted_rank_data AS (
-    SELECT t.scraping_conf_id, t.keyword, t.tag, t.top_pos, t.scrape_date, volume,
-           CASE WHEN COALESCE(volume, 0) != 0 THEN volume * t.top_pos END AS weighted_rank,
-           CASE WHEN COALESCE(volume, 0) != 0 AND t.top_pos BETWEEN 1 AND 30 THEN volume * (31 - t.top_pos) ELSE 0 END AS weighted_visibility
+    SELECT 
+        t.scraping_conf_id, 
+        t.keyword, 
+        t."tag", 
+        t.top_pos, 
+        t.scrape_date, 
+        t.volume,
+        CASE WHEN COALESCE(t.volume, 0) != 0 THEN t.volume * t.top_pos END AS weighted_rank,
+        CASE WHEN COALESCE(t.volume, 0) != 0 AND t.top_pos BETWEEN 1 AND 30 THEN t.volume * (31 - t.top_pos) ELSE 0 END AS weighted_visibility
     FROM filtered_tags t
 ),
 clicks_sum AS (
-    SELECT tag, scrape_date, SUM(clicks) AS clicks
+    SELECT 
+        "tag", 
+        scrape_date, 
+        SUM(clicks) AS clicks
     FROM filtered_tags
-    GROUP BY tag, scrape_date
+    GROUP BY "tag", scrape_date
 ),
 volume_total AS (
-    SELECT tag, scrape_date, SUM(volume) AS total_volume
+    SELECT 
+        "tag", 
+        scrape_date, 
+        SUM(volume) AS total_volume
     FROM weighted_rank_data
-    GROUP BY tag, scrape_date
+    GROUP BY "tag", scrape_date
 ),
 metrics_per_day AS (
-    SELECT wrd.tag, wrd.scrape_date, COALESCE(cs.clicks, 0) AS clicks, vt.total_volume,
-           CASE WHEN vt.total_volume = 0 THEN 100 ELSE SUM(weighted_rank) / vt.total_volume END AS avg_weight_pos,
-           CASE WHEN vt.total_volume = 0 THEN 0 ELSE SUM(weighted_visibility) / (30 * vt.total_volume) END AS visibility
+    SELECT 
+        wrd."tag", 
+        wrd.scrape_date, 
+        COALESCE(cs.clicks, 0) AS clicks, 
+        vt.total_volume,
+        CASE 
+            WHEN vt.total_volume = 0 THEN 100 
+            ELSE SUM(wrd.weighted_rank) / vt.total_volume 
+        END AS avg_weight_pos,
+        CASE 
+            WHEN vt.total_volume = 0 THEN 0 
+            ELSE SUM(wrd.weighted_visibility) / (30 * vt.total_volume) 
+        END AS visibility
     FROM weighted_rank_data wrd
-    LEFT JOIN clicks_sum cs ON cs.tag = wrd.tag AND cs.scrape_date = wrd.scrape_date
-    LEFT JOIN volume_total vt ON vt.tag = wrd.tag AND vt.scrape_date = wrd.scrape_date
-    GROUP BY wrd.tag, wrd.scrape_date, cs.clicks, vt.total_volume
-    ORDER BY wrd.tag, wrd.scrape_date
+    LEFT JOIN clicks_sum cs ON cs."tag" = wrd."tag" AND cs.scrape_date = wrd.scrape_date
+    LEFT JOIN volume_total vt ON vt."tag" = wrd."tag" AND vt.scrape_date = wrd.scrape_date
+    GROUP BY wrd."tag", wrd.scrape_date, cs.clicks, vt.total_volume
+    ORDER BY wrd."tag", wrd.scrape_date
 )
-SELECT m.tag, MAX(total_volume) AS total_volume,
-       ARRAY_AGG(m.scrape_date) AS avg_weight_position_dates,
-       ARRAY_AGG(avg_weight_pos) AS avg_weight_position,
-       ARRAY_AGG(clicks) AS clicks,
-       ARRAY_AGG(visibility) AS visibility
+SELECT 
+    m."tag", 
+    MAX(m.total_volume) AS total_volume,
+    LISTAGG(m.scrape_date::TEXT, ','), 
+    LISTAGG(m.avg_weight_pos::TEXT, ','), 
+    LISTAGG(m.clicks::TEXT, ','),
+    LISTAGG(m.visibility::TEXT, ',')
 FROM metrics_per_day m
-GROUP BY m.tag;
+GROUP BY m."tag";
 
 -- query 24
 WITH
   word_titles AS (
     SELECT
       word_id AS id,
-      MAX_BY(word, firstseen) AS word_title
+      MAX(CASE WHEN firstseen IS NOT NULL THEN firstseen::TEXT END) AS word_title  -- Cast firstseen to TEXT
     FROM
       searchwords
     GROUP BY
@@ -1264,8 +923,8 @@ WITH
         ELSE COUNT(uv.sourceip)
       END AS avg_ccv,
       MAX(uv.adrevenue) - MIN(uv.adrevenue) AS new_followers,
-      ARRAY_AGG(DISTINCT uv.languagecode) AS languages,
-      ARRAY_AGG(DISTINCT uv.searchword) AS titles
+      LISTAGG(DISTINCT uv.languagecode, ',') AS languages,  -- Explicitly cast to TEXT
+      LISTAGG(DISTINCT uv.searchword, ',') AS titles  -- Explicitly cast to VARCHAR::TEXT
     FROM
       uservisits uv
     WHERE
@@ -1276,11 +935,11 @@ WITH
   samples AS (
     SELECT
       uv.sourceip AS stream_id,
-      ARRAY_AGG(uv.visitdate) AS samples_ts,
-      ARRAY_AGG(uv.duration) AS samples_viewers,
-      ARRAY_AGG(uv.searchword) AS samples_title,
-      ARRAY_AGG(sw.word_id) AS samples_word_id,
-      ARRAY_AGG(gt.word_title) AS samples_word_title
+      LISTAGG(uv.visitdate, ',') AS samples_ts,  -- Cast visitdate to TEXT
+      LISTAGG(uv.duration, ',') AS samples_viewers,  -- Cast duration to TEXT
+      LISTAGG(uv.searchword, ',') AS samples_title,  -- Explicit cast to VARCHAR::TEXT
+      LISTAGG(sw.word_id, ',') AS samples_word_id,
+      LISTAGG(gt.word_title, ',') AS samples_word_title
     FROM
       uservisits uv
       JOIN searchwords sw ON uv.searchword = sw.word
@@ -1293,10 +952,10 @@ WITH
   group_title AS (
     SELECT
       uv.sourceip AS stream_id,
-      ARRAY_AGG(uv.searchword) AS title_groups_title,
-      ARRAY_AGG(uv.visitdate) AS title_groups_first_seen,
-      ARRAY_AGG(uv.duration) AS title_groups_f1,
-      ARRAY_AGG(uv.duration * uv.adrevenue) AS title_groups_f2
+      LISTAGG(uv.searchword, ',')AS title_groups_title,  -- Cast searchword to VARCHAR::TEXT
+      LISTAGG(uv.visitdate, ',') AS title_groups_first_seen,  -- Cast visitdate to TEXT
+      LISTAGG(uv.duration, ',') AS title_groups_f1,  -- Cast duration to TEXT
+      LISTAGG(uv.duration * uv.adrevenue, ',') AS title_groups_f2  -- Cast adrevenue to TEXT
     FROM
       uservisits uv
     WHERE
@@ -1307,11 +966,11 @@ WITH
   group_word AS (
     SELECT
       uv.sourceip AS stream_id,
-      ARRAY_AGG(sw.word_id) AS word_groups_id,
-      ARRAY_AGG(uv.visitdate) AS word_groups_first_seen,
-      ARRAY_AGG(uv.duration) AS word_groups_f1,
-      ARRAY_AGG(uv.duration * uv.adrevenue) AS word_groups_f2,
-      ARRAY_AGG(gt.word_title) AS word_groups_title
+      LISTAGG(sw.word_id, ',') AS word_groups_id,
+      LISTAGG(uv.visitdate, ',') AS word_groups_first_seen,  -- Cast visitdate to TEXT
+      LISTAGG(uv.duration, ',') AS word_groups_f1,  -- Cast duration to TEXT
+      LISTAGG(uv.duration * uv.adrevenue, ',') AS word_groups_f2,  -- Cast adrevenue to TEXT
+      LISTAGG(gt.word_title, ',') AS word_groups_title
     FROM
       uservisits uv
       JOIN searchwords sw ON uv.searchword = sw.word
@@ -1324,12 +983,12 @@ WITH
   group_word_and_title AS (
     SELECT
       uv.sourceip AS stream_id,
-      ARRAY_AGG(sw.word_id) AS word_title_groups_word_id,
-      ARRAY_AGG(uv.searchword) AS word_title_groups_stream_title,
-      ARRAY_AGG(uv.visitdate) AS word_title_groups_first_seen,
-      ARRAY_AGG(uv.duration) AS word_title_groups_f1,
-      ARRAY_AGG(uv.duration * uv.adrevenue) AS word_title_groups_f2,
-      ARRAY_AGG(uv.adrevenue) AS word_title_groups_max_ccv
+      LISTAGG(sw.word_id, ',') AS word_title_groups_word_id,
+      LISTAGG(uv.searchword, ',') AS word_title_groups_stream_title,
+      LISTAGG(uv.visitdate, ',') AS word_title_groups_first_seen,
+      LISTAGG(uv.duration, ',') AS word_title_groups_f1,
+      LISTAGG(uv.duration * uv.adrevenue, ',') AS word_title_groups_f2,
+      LISTAGG(uv.adrevenue, ',') AS word_title_groups_max_ccv
     FROM
       uservisits uv
       JOIN searchwords sw ON uv.searchword = sw.word
@@ -1339,36 +998,11 @@ WITH
       uv.sourceip
   )
 SELECT
-  b.source_id,
-  b.destination_id,
-  b.started_at,
-  b.f1,
-  b.f2,
-  b.max_ccv,
-  b.avg_ccv,
-  b.new_followers,
-  b.languages,
-  b.titles,
-  s.samples_ts,
-  s.samples_viewers,
-  s.samples_title,
-  s.samples_word_id,
-  s.samples_word_title,
-  gt.title_groups_title,
-  gt.title_groups_first_seen,
-  gt.title_groups_f1,
-  gt.title_groups_f2,
-  gg.word_groups_id,
-  gg.word_groups_first_seen,
-  gg.word_groups_f1,
-  gg.word_groups_f2,
-  gg.word_groups_title,
-  ggt.word_title_groups_word_id,
-  ggt.word_title_groups_stream_title,
-  ggt.word_title_groups_first_seen,
-  ggt.word_title_groups_f1,
-  ggt.word_title_groups_f2,
-  ggt.word_title_groups_max_ccv,
+  b.*,
+  s.*,
+  gt.*,
+  gg.*,
+  ggt.*
 FROM
   base b
   LEFT JOIN samples s ON s.stream_id = b.stream_id
@@ -1377,7 +1011,7 @@ FROM
   LEFT JOIN group_word_and_title ggt ON ggt.stream_id = b.stream_id
 ORDER BY
   b.started_at ASC
-limit 100;
+LIMIT 100;
 
 -- query 25
 WITH
@@ -1387,8 +1021,8 @@ WITH
       sw.word AS searchword,
       COUNT(uv.sourceip) AS clicks,
       SUM(uv.duration) AS volume,
-      (SUM(uv.duration) - AVG(SUM(uv.duration)) OVER (PARTITION BY sw.word)) / AVG(SUM(uv.duration)) OVER (PARTITION BY sw.word) AS volume_trend, -- Simplified trend within the month
-      MAX(uv.countrycode) AS top_country, -- Assuming a simplified logic for top_country
+      (SUM(uv.duration) - AVG(SUM(uv.duration)) OVER (PARTITION BY sw.word)) / AVG(SUM(uv.duration)) OVER (PARTITION BY sw.word) AS volume_trend,
+      MAX(uv.countrycode) AS top_country,
       COUNT(DISTINCT uv.destinationurl) AS total_sites
     FROM
       uservisits uv
@@ -1468,13 +1102,17 @@ WITH
       original_count o
     WHERE
       j.searchword != 'obnprqyuhcev'
-      AND NOT REGEXP_CONTAINS(LOWER(j.searchword), 'pattern1|text2|word3')
+      AND NOT (
+        position('pattern1|text2|word3' in lower(j.searchword)) > 0
+      )
   )
 
 SELECT
   *,
   (SELECT COUNT(*) FROM related) AS result_count,
   (SELECT MAX(score) FROM related) AS max_score
-FROM related
-ORDER BY score DESC
+FROM
+  related
+ORDER BY
+  score DESC
 LIMIT 400 OFFSET 0;

@@ -8,4 +8,5 @@ config/credentials/*.json
 credentials.json
 __pycache__
 .pytest_cache
-benchmark_results
+benchmark_results*
+.vscode

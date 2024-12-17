@@ -2,12 +2,15 @@
 
 -- SELECT HASH_AGG(*) FROM rankings;
 
+
+-- query 1
 SELECT visitdate, sourceip, adrevenue 
 FROM uservisits 
 WHERE (visitdate BETWEEN '1982-10-05' AND '1982-10-19')
 AND sourceip IN ('71.66.154.126')
 AND countrycode = 'EGY';
 
+-- query 2
 with desktop as ( 
             select 
             date_trunc('month', visitdate) as year_month_day,
@@ -54,15 +57,20 @@ mobile.year_month_day = desktop.year_month_day AND
 mobile.sourceip = desktop.sourceip AND
 mobile.countrycode = desktop.countrycode;
 
+-- query 3
 SELECT languagecode,
     MAX(visitdate) AS visitdate,
     ARRAY_TO_STRING(ARRAY_AGG(countrycode), ',') AS countrycode
 FROM uservisits
 WHERE sourceip = '23.232.221.175' and visitdate between '1982-10-05' and '1982-10-06'
 GROUP BY languagecode;
+
+-- query 4
 SELECT *
 FROM uservisits
 WHERE sourceip = '222.63.178.183' and visitdate between '1982-10-05' and '1982-10-06';
+
+-- query 5
 WITH filtered_uservisits AS( SELECT *     
   FROM uservisits     
   WHERE visitdate between '1970-01-01' and '1970-01-02') 
@@ -72,13 +80,15 @@ WITH filtered_uservisits AS( SELECT *
                                 ORDER BY duration DESC LIMIT 100 ) AS allowed_records ON allowed_records.destinationurl = filtered_uservisits.destinationurl 
   ORDER BY adrevenue desc LIMIT 20 OFFSET 0;
 
-
+-- query 6
 SELECT COUNT(*) as c FROM uservisits WHERE sourceip = '52.102.108.201' and visitdate = '1971-09-03';
 
+-- query 7
 SELECT max(visitdate) as latest_visit
 FROM uservisits
 WHERE (visitdate >= '1971-09-03' AND visitdate <= DATEADD('DAY', 1, '1971-09-03'));
 
+-- query 8
 SELECT date_trunc('month', visitdate) as year_month_day,
 COALESCE(SUM(duration), 0) as installs,
 COALESCE(SUM(length(searchword)), 0) as billingCost,
@@ -89,11 +99,13 @@ WHERE (visitdate >= '1971-09-03' AND visitdate <= DATEADD('DAY', 1, '1971-09-03'
 GROUP BY 1
 ORDER BY 1;
 
+-- query 9
 SELECT destinationurl
 from uservisits
 where adrevenue between 0.15833622633632996 and 0.9281767108678773 and visitdate between '1970-01-01' and '1970-01-07'
 group by destinationurl having count(*) > 100;
 
+-- query 10
 with busiest_days as (
   select visitdate, count(*)
   from uservisits
@@ -106,7 +118,7 @@ from uservisits
 where visitdate in (select visitdate from busiest_days)
 group by countrycode;
 
-
+-- query 11
 SELECT searchword, useragent, languagecode
 from uservisits 
 where countrycode = 'PAN'
@@ -114,7 +126,7 @@ where countrycode = 'PAN'
   and searchword in ('sxmtgekwngjwyjerk','jamyfanaoacldwi','hucii','xrlxwsikfsbuf','wubrrjursvtqteia','jfkjvramnrvuyp')
 Limit 65;
 
-
+-- query 12
 SELECT
   countrycode,
   languagecode,
@@ -132,7 +144,7 @@ WHERE
   useragent in ( 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)','Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)','Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)','Mozilla/5.0 (iPhone; U; CPU like Mac OS X)AppleWebKit/420.1 (KHTML like Gecko) Version/3.0 Mobile/4A93Safari/419.3','Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)','Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322)','Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)','Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.2)','Vtnpeyaoljvtht/7.3','Mozilla/5.0 (Windows; U; Windows NT 5.2) AppleWebKit/525.13 (KHTML like Gecko) Chrome/xxx')
 GROUP BY 1, 2;
 
-
+-- query 13
 WITH                 
                 CTE1 AS 
                 ( 
@@ -409,6 +421,8 @@ GROUP BY languagecode, topic
 SELECT *
 FROM CTE19;
 
+
+-- query 14
 SELECT
     s.is_topic,
     COALESCE(COUNT(DISTINCT uv.sourceip), 0) AS t1visits
@@ -453,6 +467,7 @@ ORDER BY
     2 DESC
 FETCH NEXT 50 ROWS ONLY;
 
+-- query 15
 SELECT * FROM (
   SELECT *, DENSE_RANK() OVER (ORDER BY z___min_rank) as z___pivot_row_rank,
     RANK() OVER (PARTITION BY z__pivot_col_rank ORDER BY z___min_rank) as z__pivot_col_ordering,
@@ -485,15 +500,17 @@ SELECT * FROM (
 WHERE (z__pivot_col_rank <= 50 OR z__is_highest_ranked_cell = 1) AND (z___pivot_row_rank <= 500 OR z__pivot_col_ordering = 1)
 ORDER BY z___pivot_row_rank;
 
+-- query 16
 SELECT r.*, v.visitdate, v.adrevenue
 FROM uservisits v inner join rankings r on v.destinationurl = r.pageurl
 WHERE sourceip ='159.220.2.32' and visitdate between '1985-01-19' and '1985-01-25';
 
-
+-- query 17
 SELECT destinationurl, COUNT(*) AS visit_count FROM UserVisits WHERE (countrycode ='ESP' or countrycode = 'RUS') 
  AND EXTRACT(YEAR FROM visitDate) = 2012 AND EXTRACT(MONTH FROM visitDate) = 4 
  GROUP BY destinationurl LIMIT 100;
 
+-- query 18
 SELECT destinationurl, sum(adrevenue) as adrevenues
 from uservisits
 WHERE searchword = 'rumclqkuxilymf'
@@ -504,6 +521,7 @@ group by destinationurl
 order by adrevenues DESC, destinationurl
 LIMIT 20000;
 
+-- query 19
 WITH CTE1
 AS
 (
@@ -946,7 +964,8 @@ WHERE  0=(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
 )
 GROUP BY searchword,where_duration;
 
-With origin_tab as (
+-- query 20
+with origin_tab as (
     select
         *
     from
@@ -1048,6 +1067,7 @@ searchword in ( select distinct word from searchwords_tab
 where word_hash in (3536249655543172992)) 
 order by adrevenue desc limit 3)) f7;
 
+-- query 21
 SELECT
     uv.destinationurl AS uv_destinationurl,
     i.asname AS i_asname,
@@ -1102,6 +1122,7 @@ GROUP BY uv_destinationurl, i.asname, a.operatingsystem, a.browser, r.pagerank
 ORDER BY uv_total_adrevenue DESC
 FETCH NEXT 50 ROWS ONLY;
 
+-- query 22
 SELECT
     uv.sourceip AS id,
     CONCAT(i.asname, ' - ', a.browser) AS group_name,
@@ -1139,7 +1160,7 @@ GROUP BY 1, 2
 ORDER BY f1 DESC
 LIMIT 50;
 
-
+-- query 23
 WITH c_curr_searchwords AS (
     SELECT word AS keyword
     FROM searchwords
@@ -1220,6 +1241,7 @@ SELECT m.tag, MAX(total_volume) AS total_volume,
 FROM metrics_per_day m
 GROUP BY m.tag;
 
+-- query 24
 WITH
   word_titles AS (
     SELECT
@@ -1334,6 +1356,7 @@ ORDER BY
   b.started_at ASC
 limit 100;
 
+-- query 25
 WITH
   base_metrics AS (
     SELECT

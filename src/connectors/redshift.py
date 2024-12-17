@@ -19,6 +19,7 @@ class RedshiftConnector:
         self.config = config
         self._validate_config()
         self._conn = None
+        self._cursor = None
 
     def _validate_config(self) -> None:
         """Validate that required configuration parameters are present."""
@@ -30,20 +31,16 @@ class RedshiftConnector:
     @contextmanager
     def connect(self):
         """Context manager for database connections."""
-        try:
-            if not self._conn:
-                self._conn = psycopg2.connect(
-                    host=self.config['host'],
-                    port=self.config['port'],
-                    dbname=self.config['database'],
-                    user=self.config['user'],
-                    password=self.config['password']
-                )
-            yield self._conn
-        finally:
-            if self._conn:
-                self._conn.close()
-                self._conn = None
+        self._conn = psycopg2.connect(
+            host=self.config['host'],
+            port=self.config['port'],
+            dbname=self.config['database'],
+            user=self.config['user'],
+            password=self.config['password']
+        )
+        self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self._cursor.execute("SET enable_result_cache_for_session TO off;")
+
 
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """
@@ -56,82 +53,19 @@ class RedshiftConnector:
         Returns:
             List[Dict]: Query results as a list of dictionaries
         """
-        with self.connect() as conn:
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            try:
-                cursor.execute(query, params or {})
-                return cursor.fetchall()
-            finally:
-                cursor.close()
-
-    def execute_batch(self, query: str, params_list: List[Dict[str, Any]]) -> None:
-        """
-        Execute a batch of parameterized queries.
-        
-        Args:
-            query (str): SQL query template
-            params_list (List[Dict[str, Any]]): List of parameter dictionaries
-        """
-        with self.connect() as conn:
-            cursor = conn.cursor()
-            try:
-                psycopg2.extras.execute_batch(cursor, query, params_list)
-                conn.commit()
-            finally:
-                cursor.close()
-
-    def copy_from_s3(self, table: str, s3_path: str, iam_role: str, options: Optional[Dict[str, str]] = None) -> None:
-        """
-        Copy data from S3 into a Redshift table.
-        
-        Args:
-            table (str): Target table name
-            s3_path (str): S3 path to source data
-            iam_role (str): IAM role ARN with necessary permissions
-            options (Optional[Dict[str, str]]): Additional COPY command options
-        """
-        copy_options = options or {}
-        options_str = ' '.join([f"{k} {v}" for k, v in copy_options.items()])
-        
-        copy_query = f"""
-            COPY {table}
-            FROM '{s3_path}'
-            IAM_ROLE '{iam_role}'
-            {options_str}
-        """
-        
-        with self.connect() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(copy_query)
-                conn.commit()
-            finally:
-                cursor.close()
-
-    def unload_to_s3(self, query: str, s3_path: str, iam_role: str, options: Optional[Dict[str, str]] = None) -> None:
-        """
-        Unload query results to S3.
-        
-        Args:
-            query (str): Query to unload
-            s3_path (str): S3 path for output
-            iam_role (str): IAM role ARN with necessary permissions
-            options (Optional[Dict[str, str]]): Additional UNLOAD command options
-        """
-        unload_options = options or {}
-        options_str = ' '.join([f"{k} {v}" for k, v in unload_options.items()])
-        
-        unload_query = f"""
-            UNLOAD ('{query}')
-            TO '{s3_path}'
-            IAM_ROLE '{iam_role}'
-            {options_str}
-        """
-        
-        with self.connect() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(unload_query)
-                conn.commit()
-            finally:
-                cursor.close()
+        if not self._conn or not self._cursor:
+            self.connect() 
+        try:
+            self._cursor.execute(query)
+            if self._cursor.description:
+                return self._cursor.fetchall()
+            return []
+        except Exception as e:
+            raise Exception(f"Error executing redshift query: {str(e)}")
+            
+    def close(self) -> None:
+        """Close the Snowflake connection if it exists."""
+        if self._conn:
+            self._conn.close()
+            self._conn = None
+            self._cursor = None

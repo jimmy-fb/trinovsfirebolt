@@ -42,6 +42,7 @@ class SnowflakeConnector:
                 telemetry=False
             )
             self._cursor = self._conn.cursor(snowflake.connector.DictCursor)
+            self._cursor.execute("ALTER SESSION SET USE_CACHED_RESULT = FALSE;")
 
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """
@@ -66,9 +67,7 @@ class SnowflakeConnector:
 
     def close(self) -> None:
         """Close the Snowflake connection if it exists."""
-        if hasattr(self, 'cursor') and self.cursor:
-            self._cursor.close()
-        if hasattr(self, 'conn') and self.conn:
+        if self._conn:
             self._conn.close()
             self._conn = None
             self._cursor = None

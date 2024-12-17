@@ -40,6 +40,7 @@ class FireboltConnector:
                 )
             )
             self.cursor = self._conn.cursor()
+            self.cursor.execute("SET enable_result_cache=false")
 
     def execute_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
@@ -62,9 +63,7 @@ class FireboltConnector:
                 self.cursor.execute(query)
             
             if self.cursor.description:  # If the query returns results
-                columns = [desc[0] for desc in self.cursor.description]
-                results = self.cursor.fetchall()
-                return [dict(zip(columns, row)) for row in results]
+                return self.cursor.fetchall()
             return []
             
         except Exception as e:

@@ -62,7 +62,7 @@ class BigQueryConnector:
             List[Dict]: Query results as a list of dictionaries
         """
         job_config = bigquery.QueryJobConfig(
-            use_query_cache=True,
+            use_query_cache=False,  # Disable query cache
             dry_run=dry_run
         )
 
