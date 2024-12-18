@@ -208,43 +208,44 @@ class BenchmarkRunner:
     def run_benchmark(self) -> Dict:
         results = {}
         num_iterations = ITERATIONS_PER_QUERY  # Run each query multiple times to get a distribution
-        
-        for vendor in self.vendors:
-            if vendor not in self.connectors:
-                print(f"Skipping {vendor} - connector not implemented")
-                continue
 
-            print(f"\nRunning benchmark for {vendor.upper()}...")
+        def run_vendor_benchmark(vendor):
+            if vendor not in self.connectors:
+                self.logger.warning(f"Skipping {vendor} - connector not implemented")
+                return vendor, []
+
+            self.logger.info(f"Running benchmark for {vendor.upper()}...")
 
             # Execute setup script if execute_setup is True
             if self.execute_setup:
                 if not self._execute_setup_script(vendor):  # Only run benchmark if setup succeeded
-                    print("Skipping benchmark due to setup failure.")
-                    return  # 
-                
+                    self.logger.warning("Skipping benchmark due to setup failure.")
+                    return vendor, []
+
             vendor_results = []
-            
+
             try:
                 self.connection_pools[vendor] = ConnectionPool(
                     self.connectors[vendor],
                     self.credentials[vendor],
                     self.pool_size
                 )
-                
+
                 # Load the appropriate benchmark SQL file for the vendor
                 benchmark_file = self._get_sql_file(vendor, 'benchmark')
                 benchmark_queries = self._load_queries(benchmark_file)
                 if not benchmark_queries:
-                    raise ValueError(f"No benchmark queries found for vendor : {vendor}")
-                self.logger.info(f"Loaded {len(benchmark_queries)} benchmark queries for : {vendor}")
+                    raise ValueError(f"No benchmark queries found for vendor: {vendor}")
+                self.logger.info(f"Loaded {len(benchmark_queries)} benchmark queries for: {vendor}")
+
                 for query_number, query in enumerate(benchmark_queries, 1):
-                    print(f"Running query {query_number} with {self.concurrency} concurrent executions...")
+                    self.logger.info(f"Running query {query_number} with {self.concurrency} concurrent executions...")
                     # Run each query multiple times
                     for iteration in range(num_iterations):
-                        print(f"  Iteration {iteration + 1}/{num_iterations}")
+                        self.logger.info(f"  Iteration {iteration + 1}/{num_iterations}")
                         query_results = self._run_concurrent_query(vendor, query, query_number)
                         vendor_results.extend(query_results)
-                
+
                 # Prepare data for CSV export
                 csv_data = [
                     {
@@ -257,14 +258,23 @@ class BenchmarkRunner:
                     }
                     for result in vendor_results
                 ]
-                
-                results[vendor] = csv_data  # Store the formatted data for this vendor        
+
                 self.connection_pools[vendor].close_all()
-                
+
             except Exception as e:
                 self.logger.error(f"Error running benchmark for {vendor}: {str(e)}")
+                csv_data = []
             finally:
                 self.connectors[vendor].close()  # Ensure proper cleanup
+
+            return vendor, csv_data
+
+        with ThreadPoolExecutor(max_workers=len(self.vendors)) as executor:
+            future_to_vendor = {executor.submit(run_vendor_benchmark, vendor): vendor for vendor in self.vendors}
+            for future in as_completed(future_to_vendor):
+                vendor, csv_data = future.result()
+                if csv_data:
+                    results[vendor] = csv_data
 
         if not results:
             self.logger.warning("No results were generated from the benchmark.")

@@ -36,6 +36,14 @@ class VisualExporter(BenchmarkExporter):
                 avg_time = np.mean(filtered_times)
                 avg_execution_times[vendor].append(avg_time)
 
+        # Define a color map for each vendor using RGB values
+        vendor_colors = {
+            'firebolt': '#f72a30',
+            'redshift': '#E47911',
+            'snowflake': '#249edc', 
+            'bigquery': '#008000' # green cause their color it too close to SF :-)
+        }
+
         # Plotting
         plt.figure(figsize=(10, 6))
 
@@ -43,9 +51,9 @@ class VisualExporter(BenchmarkExporter):
         bar_width = 0.2
         index = np.arange(len(query_names))
 
-        # Plot each vendor's average execution time
+        # Plot each vendor's average execution time with specified RGB colors
         for i, vendor in enumerate(avg_execution_times.keys()):
-            plt.bar(index + i * bar_width, avg_execution_times[vendor], bar_width, label=vendor)
+            plt.bar(index + i * bar_width, avg_execution_times[vendor], bar_width, label=vendor, color=vendor_colors.get(vendor, '#7f7f7f'))
 
         # Set the x-ticks to the query names
         plt.xlabel('Queries')

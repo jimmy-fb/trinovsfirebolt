@@ -43,7 +43,14 @@ To connect to the data warehouse vendors, you need to provide a single credentia
     "bigquery": {
         "project_id": "your_project_id",
         "key_file": "path_to_your_service_account_key.json"
-    }
+    },
+     "redshift": {
+        "host": "your_cluster_name.region.redshift.amazonaws.com",
+        "port": 5439,
+        "database": "your_database",
+        "user": "your_username",
+        "password": "your_password"
+    },
 }
 ```
 
@@ -107,14 +114,22 @@ project-root/
 │   │   └── firebolt/
 │   │       └── setup.sql          # firebolt specific setup SQL file
 │   │   
-│   └── firenewt/
+│   └── FireBench/
 │       ├── firebolt/
 │       │   ├── benchmark.sql      # firebolt specific benchmark SQL file
 │       │   └── setup.sql          # firebolt specific setup SQL file
 │       │
 │       └── snowflake/
-│           ├── benchmark.sql      # snowflake specific benchmark SQL file
-│           └── setup.sql          # snowflake specific setup SQL file
+│       |   ├── benchmark.sql      # snowflake specific benchmark SQL file
+│       |   └── setup.sql          # snowflake specific setup SQL file
+│       │
+│       └── bigquery/
+│       |   ├── benchmark.sql      # bigquery specific benchmark SQL file
+│       |   └── setup.sql          # bigquery specific setup SQL file
+│       │
+│       └── redshift/
+│           ├── benchmark.sql      # redshift specific benchmark SQL file
+│           └── setup.sql          # redshift specific setup SQL file
 │
 ├── tests/                   # Contains unit and integration tests
 │
