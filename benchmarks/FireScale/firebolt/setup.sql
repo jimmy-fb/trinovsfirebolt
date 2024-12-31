@@ -84,15 +84,3 @@ VACUUM searchwords;
 VACUUM agents;
 
 VACUUM ipaddresses;
-
-CREATE AGGREGATING INDEX idx_by_day ON
-uservisits (
-  visitdate,
-  countrycode,
-  languagecode,
-  useragent,
-  MAX(visitdate),
-  SUM(adrevenue),
-  MAX(adrevenue),
-  COUNT(*)
-);
