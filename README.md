@@ -34,23 +34,27 @@ To connect to the data warehouse vendors, you need to provide a single credentia
         "schema": "your_schema",
         "warehouse": "your_warehouse"
     },
+    "redshift": {
+        "host": "your_cluster.region.redshift.amazonaws.com",
+        "port": 5439,
+        "database": "your_database",
+        "user": "your_user",
+        "password": "your_password"
+    },
     "firebolt": {
-        "account": "your_account",
-        "user": "your_username",
-        "password": "your_password",
-        "database": "your_database"
+        "account_name": "your firebolt account name",
+        "database": "your_database",
+        "engine_name": "your_engine",
+        "auth": {
+            "id": "your firebolt service account id",
+            "secret": "your firebolt service account secret"
+        }
     },
     "bigquery": {
         "project_id": "your_project_id",
-        "key_file": "path_to_your_service_account_key.json"
-    },
-     "redshift": {
-        "host": "your_cluster_name.region.redshift.amazonaws.com",
-        "port": 5439,
-        "database": "your_database",
-        "user": "your_username",
-        "password": "your_password"
-    },
+        "dataset": "your_dataset",
+        "key": "your json key generated from google cloud"
+    }
 }
 ```
 

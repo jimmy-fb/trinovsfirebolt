@@ -63,7 +63,7 @@ class BenchmarkRunner:
         benchmark_name: str,
         creds_file: str,
         vendors: List[str] = None,
-        pool_size: int = 5,
+        pool_size: int = ITERATIONS_PER_QUERY,
         concurrency: int = 1,
         output_dir: str = 'benchmark_results',
         execute_setup: bool = False,
@@ -71,8 +71,9 @@ class BenchmarkRunner:
     ):
         self.benchmark_name = benchmark_name
         self.vendors = vendors
-        self.pool_size = pool_size
         self.concurrency = concurrency
+        #  pool_size cannot be smaller than the expected concurrency level
+        self.pool_size =  pool_size if concurrency <= pool_size else concurrency
         self.output_dir = output_dir
         self.execute_setup = execute_setup
         self.logger = logging.getLogger(__name__)
@@ -144,8 +145,9 @@ class BenchmarkRunner:
         """Execute a single query and return its results."""
         start_time = time.time()
         try:
-            connector = self.connectors[vendor]
-            results = connector.execute_query(query)
+            # Acquire a connection from the pool
+            connection = self.connection_pools[vendor].get_connection()
+            results = connection.execute_query(query)
             duration = time.time() - start_time
             
             return {
@@ -169,6 +171,9 @@ class BenchmarkRunner:
                 'timestamp': datetime.now().isoformat(),
                 'concurrent_run': concurrent_run
             }
+        finally:
+            # Return the connection to the pool
+            self.connection_pools[vendor].return_connection(connection)
 
     def _run_concurrent_query(self, vendor: str, query: str, query_number: int) -> List[QueryResult]:
         """Run a query concurrently and return the results."""
@@ -207,7 +212,7 @@ class BenchmarkRunner:
 
     def run_benchmark(self) -> Dict:
         results = {}
-        num_iterations = ITERATIONS_PER_QUERY  # Run each query multiple times to get a distribution
+        num_iterations = ITERATIONS_PER_QUERY if self.concurrency == 1 else 1 # Run each query multiple times to get a distribution
 
         def run_vendor_benchmark(vendor):
             if vendor not in self.connectors:
