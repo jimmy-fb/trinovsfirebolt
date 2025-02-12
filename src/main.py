@@ -106,7 +106,7 @@ def main():
             runner = ConcurrentBenchmarkRunner(
                 benchmark_name=args.benchmark_name,
                 creds_file=args.creds_file,
-                vendors=vendors,
+                vendor=vendor,
                 concurrency=args.concurrency,
                 benchmark_duration_secs=args.concurrency_duration_s,
                 output_dir=args.output_dir,

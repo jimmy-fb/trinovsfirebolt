@@ -14,8 +14,7 @@ from pathlib import Path
 from queue import Queue
 from typing import Any, Dict, List, Optional
 
-import connectors
-
+from . import connectors
 from .exporters import CSVExporter, VisualExporter
 
 ITERATIONS_PER_QUERY = 5
@@ -411,6 +410,8 @@ class ConcurrentBenchmarkRunner:
             writer = csv.DictWriter(csv_file, fieldnames=field_names)
             writer.writeheader()
             for worker_id, worker_results in enumerate(self.worker_thread_results):
+                if not worker_results:
+                    self.logger.warning(f"No results found for worker {worker_id}")
                 for result in worker_results:
                     row = {
                         "worker_id": worker_id,
@@ -420,7 +421,7 @@ class ConcurrentBenchmarkRunner:
                         "stop_unix_time": result.stop_unix_time,
                     }
                     writer.writerow(row)
-        print(f"Results exported to {csv_file_path}")
+        self.logger.info(f"Results exported to {csv_file_path}")
 
     def run_benchmark(self):
         self.logger.info(f"Running concurrency benchmark for {self.vendor.upper()}...")
