@@ -1,23 +1,22 @@
+import csv
+import itertools
 import json
 import logging
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
-from datetime import datetime
 import os
+import pathlib
+import random
 import threading
-from queue import Queue
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from queue import Queue
+from typing import Any, Dict, List, Optional
 
-from .connectors import (
-    SnowflakeConnector,
-    FireboltConnector,
-    BigQueryConnector,
-    RedshiftConnector
-)
+import connectors
+
 from .exporters import CSVExporter, VisualExporter
-
 
 ITERATIONS_PER_QUERY = 5
 
@@ -90,21 +89,9 @@ class BenchmarkRunner:
         for vendor in vendors:
             if vendor not in self.credentials:
                 raise ValueError(f"No credentials found for vendor: {vendor}")
-            
-            connector_class = self._get_connector_class(vendor)
-            self.connectors[vendor] = connector_class(config=self.credentials[vendor])
 
-    def _get_connector_class(self, vendor: str):
-        """Get the appropriate connector class for a vendor."""
-        connector_map = {
-            'snowflake': SnowflakeConnector,
-            'firebolt': FireboltConnector,
-            'bigquery': BigQueryConnector,
-            'redshift': RedshiftConnector
-        }
-        if vendor not in connector_map:
-            raise ValueError(f"Unsupported vendor: {vendor}")
-        return connector_map[vendor]
+            connector_class = connectors.get_connector_class(vendor)
+            self.connectors[vendor] = connector_class(config=self.credentials[vendor])
 
     def _load_queries(self, query_file):
         if isinstance(query_file, (str, bytes, os.PathLike)):
@@ -310,3 +297,151 @@ class BenchmarkRunner:
             self.logger.error(f"Error executing setup script {setup_file}: {str(e)}")
             return False
         return True
+
+
+@dataclass
+class ConcurrentQueryResult:
+    query_name: str
+    has_error: bool
+    start_unix_time: float
+    stop_unix_time: float
+
+
+class ConcurrentBenchmarkRunner:
+    def __init__(
+        self,
+        benchmark_name: str,
+        creds_file: str,
+        vendor: str,
+        concurrency: int,
+        benchmark_duration_secs: int,
+        output_dir: str,
+        benchmark_path: str,
+    ):
+        self.benchmark_name = benchmark_name
+        self.vendor = vendor
+        self.concurrency = concurrency
+        self.benchmark_duration_secs = benchmark_duration_secs
+        self.output_dir = output_dir
+        self.benchmark_path = benchmark_path
+        self.logger = logging.getLogger(__name__)
+        self.connector_class = connectors.get_connector_class(self.vendor)
+
+        # Load credentials
+        with open(creds_file, "r") as f:
+            all_credentials = json.load(f)
+            if vendor not in all_credentials:
+                raise ValueError(f"No credentials found for vendor: {vendor}")
+            self.credentials = all_credentials[vendor]
+
+        # Load queries
+        queries_file = self._get_sql_file(vendor)
+        with open(queries_file, "r") as f:
+            self.queries = json.load(f)
+        if not self.queries:
+            raise ValueError(f"No benchmark queries found for vendor: {vendor}")
+        self.logger.info(f"Loaded benchmark queries for: {vendor}")
+
+        # Get the names of the queries
+        self.query_names = list(self.queries.keys())
+
+    def _get_sql_file(self, vendor):
+        general_file = pathlib.Path(self.benchmark_path) / "queries.json"
+        vendor_file = pathlib.Path(self.benchmark_path) / f"{vendor}" / "queries.json"
+        return vendor_file if os.path.exists(vendor_file) else general_file
+
+    def _run_worker(self, id: int):
+        # Seed the random number generator for reproducibility
+        rng = random.Random(id)
+        # Each worker thread should execute the queries in a random order
+        query_names_random_permutation = rng.sample(
+            self.query_names, len(self.query_names)
+        )
+        # Connect to the database
+        connector = self.connector_class(config=self.credentials)
+        connector.connect()
+        results = []
+
+        # Wait until all worker threads are ready
+        self.start_barrier.wait()
+
+        # Repeatedly iterate over the queries until the main thread sets `self.stop_event`
+        for query_name in itertools.cycle(query_names_random_permutation):
+            # Choose a random variation of the query
+            random_query_variation = rng.choice(self.queries[query_name])
+            try:
+                has_error = False
+                start_time = time.time()
+                connector.execute_query(random_query_variation)
+                stop_time = time.time()
+            except Exception as e:
+                has_error = True
+                self.logger.error(
+                    f"Error running query {query_name} for {self.vendor}: {str(e)}"
+                )
+
+            if self.stop_event.is_set():
+                # Stop the worker thread. The current query did not finish in time and should not
+                # be included in `self.worker_thread_results`.
+                self.worker_thread_results[id] = results
+                connector.close()
+                return
+            else:
+                results.append(
+                    ConcurrentQueryResult(
+                        query_name=query_name,
+                        has_error=has_error,
+                        start_unix_time=start_time,
+                        stop_unix_time=stop_time,
+                    )
+                )
+
+    def _write_csv(self):
+        # Ensure the directory exists
+        os.makedirs(self.output_dir, exist_ok=True)
+        csv_file_path = os.path.join(self.output_dir, f"{self.vendor}_concurrency.csv")
+        with open(csv_file_path, mode="w", newline="") as csv_file:
+            field_names = [
+                "worker_id",
+                "query_name",
+                "has_error",
+                "start_unix_time",
+                "stop_unix_time",
+            ]
+            writer = csv.DictWriter(csv_file, fieldnames=field_names)
+            writer.writeheader()
+            for worker_id, worker_results in enumerate(self.worker_thread_results):
+                for result in worker_results:
+                    row = {
+                        "worker_id": worker_id,
+                        "query_name": result.query_name,
+                        "has_error": result.has_error,
+                        "start_unix_time": result.start_unix_time,
+                        "stop_unix_time": result.stop_unix_time,
+                    }
+                    writer.writerow(row)
+        print(f"Results exported to {csv_file_path}")
+
+    def run_benchmark(self):
+        self.logger.info(f"Running concurrency benchmark for {self.vendor.upper()}...")
+        self.start_barrier = threading.Barrier(self.concurrency)
+        self.stop_event = threading.Event()
+        self.worker_thread_results = [[] for _ in range(self.concurrency)]
+
+        # Start `self.concurrency` worker threads
+        threads = []
+        for i in range(self.concurrency):
+            thread = threading.Thread(target=self._run_worker, args=(i,))
+            threads.append(thread)
+            thread.start()
+
+        # Let the worker threads work for `self.benchmark_duration_secs` seconds
+        time.sleep(self.benchmark_duration_secs)
+        self.stop_event.set()
+
+        # Wait for all worker threads to finish
+        for thread in threads:
+            thread.join()
+
+        self._write_csv()
+        self.logger.info(f"Finished concurrency benchmark for {self.vendor.upper()}...")

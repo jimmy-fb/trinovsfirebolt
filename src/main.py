@@ -1,8 +1,10 @@
-from .runner import BenchmarkRunner
 import argparse
 import logging
 import os
 from pathlib import Path
+
+from .runner import BenchmarkRunner, ConcurrentBenchmarkRunner
+
 
 def setup_logging():
     logging.basicConfig(
@@ -57,6 +59,8 @@ def main():
                        help='Connection pool size')
     parser.add_argument('--concurrency', type=int, default=1, 
                        help='Concurrent queries')
+    parser.add_argument('--concurrency-duration-s', type=int, default=1,
+                       help='The duration in seconds to use for each concurrency benchmark')
     parser.add_argument('--output-dir', default='benchmark_results', 
                        help='Output directory')
     parser.add_argument('--execute-setup', action='store_true', 
@@ -72,26 +76,47 @@ def main():
         
         # Parse vendors
         vendors = parse_vendors(args.vendors)
-        logger.info(f"Running benchmark '{args.benchmark_name}' for vendors: {vendors}")
+        logger.info(
+            f"Running sequential benchmark '{args.benchmark_name}' for vendors: {vendors}"
+        )
 
-        runner = BenchmarkRunner(
+        sequential_runner = BenchmarkRunner(
             benchmark_name=args.benchmark_name,
             creds_file=args.creds_file,
             vendors=vendors,
             pool_size=args.pool_size,
-            concurrency=args.concurrency,
+            concurrency=1,
             output_dir=args.output_dir,
             benchmark_path=benchmark_path,
-            execute_setup=args.execute_setup
+            execute_setup=args.execute_setup,
         )
 
-        results = runner.run_benchmark()
+        results = sequential_runner.run_benchmark()
         if not results:
-            logger.error("No results were generated from the benchmark")
+            logger.error("No results were generated from the sequential benchmark")
             return
-            
-        logger.info(f"Benchmark results saved to: {args.output_dir}")
-        
+
+        logger.info(f"Sequential benchmark results saved to: {args.output_dir}")
+
+        # Run concurrency benchmarks
+        for vendor in vendors:
+            logger.info(
+                f"Running concurrency benchmark '{args.benchmark_name}' for {args.concurrency_duration_s} seconds for vendor: {vendor}"
+            )
+            runner = ConcurrentBenchmarkRunner(
+                benchmark_name=args.benchmark_name,
+                creds_file=args.creds_file,
+                vendors=vendors,
+                concurrency=args.concurrency,
+                benchmark_duration_secs=args.concurrency_duration_s,
+                output_dir=args.output_dir,
+                benchmark_path=benchmark_path,
+            )
+            runner.run_benchmark()
+            logger.info(
+                f"Concurrency benchmark results of {vendor} saved to: {args.output_dir}"
+            )
+
     except ValueError as e:
         logger.error(f"Configuration error: {str(e)}")
         exit(1)
