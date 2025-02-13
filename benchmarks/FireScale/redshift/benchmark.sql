@@ -104,7 +104,7 @@ ORDER BY 1;
 SELECT destinationurl
 from uservisits
 where adrevenue between 0.15833622633632996 and 0.9281767108678773 and visitdate between '1970-01-01' and '1970-01-07'
-group by destinationurl having count(*) > 100;
+group by destinationurl having count(*) > 40;
 
 -- query 10
 with busiest_days as (
@@ -463,7 +463,7 @@ WHERE
             ELSE FALSE
         END
     ) = 1
-    AND a.browser ~ 'Firefox$'
+    AND a.browser ~ 'Safari'
 GROUP BY
     1
 HAVING COALESCE(COUNT(DISTINCT uv.sourceip), 0) > 0
@@ -536,7 +536,7 @@ WITH macos_uservisits AS (
     INNER JOIN agents 
         ON B.useragent = agents.agentname 
     WHERE agents.operatingsystem = 'macOS' 
-      AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+      AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
       AND B.visitdate BETWEEN '1984-03-21' AND '1984-03-23'
       AND B.countrycode IN ('MNE')
       AND B.sourceip IN ('193.40.40.164')
@@ -551,7 +551,7 @@ distinct_languages AS (
         ON A.useragent = agents.agentname 
     WHERE agents.operatingsystem = 'macOS' 
       AND agents.devicearch = 'x64'
-      AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+      AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 ),
 
 all_languages_combined AS (
@@ -1084,7 +1084,7 @@ WITH
       base_metrics kwm
       JOIN site_intersection vi ON kwm.searchword = vi.searchword
     WHERE
-      kwm.searchword IN (SELECT searchword FROM site_intersection UNION ALL SELECT 'some-value-that-not-exist')
+      kwm.searchword IN (SELECT searchword FROM site_intersection UNION ALL SELECT 'obnprqyuhcev')
   ),
 
   related AS (
@@ -1101,7 +1101,7 @@ WITH
     CROSS JOIN
       original_count o
     WHERE
-      j.searchword != 'obnprqyuhcev'
+      j.searchword != 'some-value-that-not-exist'
       AND NOT (
         position('pattern1|text2|word3' in lower(j.searchword)) > 0
       )

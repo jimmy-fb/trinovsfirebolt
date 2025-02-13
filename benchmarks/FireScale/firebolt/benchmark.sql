@@ -102,7 +102,7 @@ ORDER BY 1;
 SELECT destinationurl
 from uservisits
 where adrevenue between 0.15833622633632996 and 0.9281767108678773 and visitdate between '1970-01-01' and '1970-01-07'
-group by destinationurl having count(*) > 100;
+group by destinationurl having count(*) > 40;
 
 -- query 10
 with busiest_days as (
@@ -458,7 +458,7 @@ WHERE
             WHEN 'Date' = 'Month' AND 'Off' = 'Partial' AND EXTRACT(HOUR FROM CURRENT_TIMESTAMP) < 9 THEN uv.visitdate >= date_trunc('month', CURRENT_DATE) - interval '1 month' 
             ELSE FALSE
         END) THEN 1 ELSE 0 END) = 1
-     AND REGEXP_LIKE(a.browser, 'Firefox$')
+     AND REGEXP_LIKE(a.browser, 'Safari')
 GROUP BY
     1
 HAVING COALESCE(COUNT(DISTINCT uv.sourceip), 0) > 0
@@ -530,8 +530,8 @@ SELECT
 		SUM(B.duration) AS sum_duration
 FROM uservisits B
 INNER JOIN agents  ON   B.useragent = agents.agentname 
-WHERE agents.operatingsystem = 'macOS' 
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 AND B.countrycode  IN ('MNE')
 AND B.sourceip IN ('193.40.40.164')
@@ -545,9 +545,9 @@ SELECT DISTINCT A.languagecode
 FROM uservisits A 
 INNER JOIN agents 
 ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 AND A.sourceip IN ('193.40.40.164')
 ),
@@ -566,9 +566,9 @@ INNER JOIN searchwords AC
 ON A.searchword =AC.word
 INNER JOIN CTE2 AC2
 ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 AND A.countrycode  IN ('MNE')
 AND A.sourceip IN ('193.40.40.164')
@@ -587,9 +587,9 @@ INNER JOIN ipaddresses BD
 ON B.sourceip=BD.ip
 INNER JOIN agents 
 ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
 AND B.countrycode  IN ('MNE')
 AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 GROUP BY searchword, B.languagecode
@@ -604,9 +604,9 @@ INNER JOIN ipaddresses BD
 ON A.sourceip=BD.ip
 INNER JOIN agents 
 ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.countrycode IN('MNE')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 ),
@@ -626,9 +626,9 @@ INNER JOIN searchwords AC
 ON A.searchword =AC.word
 INNER JOIN CTE5 AC2
 ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.countrycode  IN ('MNE')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 AND AC.is_topic
@@ -649,9 +649,9 @@ INNER JOIN ipaddresses BD
 ON B.sourceip=BD.ip
 INNER JOIN agents 
 ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
 AND B.countrycode  IN ('MNE')
 AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 GROUP BY searchword, B.languagecode
@@ -666,9 +666,9 @@ INNER JOIN ipaddresses BD
 ON A.sourceip=BD.ip
 INNER JOIN agents 
 ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
 ),
 
@@ -688,9 +688,9 @@ ON A.searchword =AC.word
 INNER JOIN CTE8 AC2
 ON A.languagecode = AC2.languagecode
 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.countrycode  IN ('MNE')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
 AND AC.is_topic  
@@ -708,9 +708,9 @@ SUM(B.duration) AS sum_duration
 FROM uservisits B 
 INNER JOIN agents 
 ON   B.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND B.countrycode  IN ('MNE')
 AND B.sourceip IN ('193.40.40.164')
 AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
@@ -724,9 +724,9 @@ SELECT DISTINCT A.languagecode
 FROM uservisits A
 INNER JOIN agents 
 ON   A.useragent = agentname 
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.sourceip IN ('193.40.40.164')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
 ),
@@ -744,9 +744,9 @@ INNER JOIN searchwords AC
 ON A.searchword =AC.word
 INNER JOIN CTE11 AC2
 ON A.languagecode = AC2.languagecode
-WHERE agents.operatingsystem = 'macOS' 
+WHERE agents.operatingsystem = 'Windows 10' 
 AND agents.devicearch = 'x64'
-AND agents.browser IN ('Gllvuxwiyxaufhlayjaq/0.7', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
 AND A.countrycode  IN ('MNE')
 AND A.sourceip IN ('193.40.40.164')
 AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
@@ -765,7 +765,6 @@ FROM CTE3 AS C2
 INNER JOIN CTE1 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 
 UNION ALL
@@ -779,7 +778,6 @@ FROM CTE3 AS C2
 INNER JOIN CTE1 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 
 UNION ALL
@@ -793,7 +791,6 @@ FROM CTE3 AS C2
 INNER JOIN CTE1 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 ),
 CTE14 AS
@@ -809,7 +806,6 @@ FROM CTE6 AS C2
 INNER JOIN CTE4 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 
 UNION ALL
@@ -823,7 +819,6 @@ FROM CTE6 AS C2
 INNER JOIN CTE4 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 
 UNION ALL
@@ -837,7 +832,6 @@ FROM CTE6 AS C2
 INNER JOIN CTE4 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 ),
 CTE15 AS
@@ -852,35 +846,6 @@ FROM CTE9 AS C2
 INNER JOIN CTE7 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '2' AS searchword,
-'OVER DURATION' AS where_duration,
-COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE9 AS C2
-INNER JOIN CTE7 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
-GROUP BY ALL
-
-UNION ALL
-
-SELECT  '3' AS searchword,
-'UNDER DURATION' AS where_duration,
-COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
-    THEN C1.languagecode
-   END )AS sum_duration_DATA
-FROM CTE9 AS C2
-INNER JOIN CTE7 C1
-ON C1.languagecode = C2.languagecode
-AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
 GROUP BY ALL
 ),
 
@@ -896,7 +861,6 @@ FROM uservisits AS C2
 INNER JOIN CTE10 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
-WHERE C1.searchword='u'
   AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
 GROUP BY ALL
     
@@ -912,7 +876,6 @@ INNER JOIN CTE10 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
 AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
-WHERE C1.searchword='u'
 GROUP BY ALL
 
 UNION ALL
@@ -927,7 +890,6 @@ INNER JOIN CTE10 C1
 ON C1.languagecode = C2.languagecode
 AND C1.searchword=C2.searchword
 AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
-WHERE C1.searchword='u'
 GROUP BY ALL
 )
 
@@ -1426,7 +1388,7 @@ WITH
       base_metrics kwm
       JOIN site_intersection vi ON kwm.searchword = vi.searchword
     WHERE
-      kwm.searchword IN (SELECT searchword FROM site_intersection UNION ALL SELECT 'some-value-that-not-exist')
+      kwm.searchword IN (SELECT searchword FROM site_intersection UNION ALL SELECT 'obnprqyuhcev')
   ),
 
   related AS (
@@ -1443,7 +1405,7 @@ WITH
     CROSS JOIN
       original_count o
     WHERE
-      j.searchword != 'obnprqyuhcev'
+      j.searchword != 'some-value-that-not-exist'
       AND NOT REGEXP_LIKE(LOWER(j.searchword), 'pattern1|text2|word3')
   )
 
