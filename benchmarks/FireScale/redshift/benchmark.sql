@@ -527,54 +527,409 @@ ORDER BY adrevenues DESC, destinationurl
 LIMIT 20000;
 
 -- query 19
-WITH macos_uservisits AS (
-    SELECT  
-        B.searchword AS searchword,
-        B.languagecode AS languagecode,
-        SUM(B.duration) AS sum_duration
-    FROM uservisits B
-    INNER JOIN agents 
-        ON B.useragent = agents.agentname 
-    WHERE agents.operatingsystem = 'macOS' 
-      AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
-      AND B.visitdate BETWEEN '1984-03-21' AND '1984-03-23'
-      AND B.countrycode IN ('MNE')
-      AND B.sourceip IN ('193.40.40.164')
-    GROUP BY B.searchword, B.languagecode
+WITH CTE1
+AS
+(
+SELECT  
+  searchword AS searchword,
+		B.languagecode,
+		SUM(B.duration) AS sum_duration
+FROM uservisits B
+INNER JOIN agents  ON   B.useragent = agents.agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+AND B.countrycode  IN ('MNE')
+AND B.sourceip IN ('193.40.40.164')
+GROUP BY searchword, B.languagecode
 ),
 
-distinct_languages AS (
-    SELECT DISTINCT 
-        A.languagecode
-    FROM uservisits A 
-    INNER JOIN agents 
-        ON A.useragent = agents.agentname 
-    WHERE agents.operatingsystem = 'macOS' 
-      AND agents.devicearch = 'x64'
-      AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+CTE2
+AS
+(
+SELECT DISTINCT A.languagecode  
+FROM uservisits A 
+INNER JOIN agents 
+ON   A.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+AND A.sourceip IN ('193.40.40.164')
 ),
 
-all_languages_combined AS (
-    SELECT DISTINCT 
-        languagecode
-    FROM uservisits
+CTE3
+AS
+(
+SELECT
+	searchword AS searchword,
+	A.languagecode,
+	COUNT(A.languagecode)  languagecode_cnt
+FROM uservisits A
+INNER JOIN agents 
+ON   A.useragent = agentname
+INNER JOIN searchwords AC
+ON A.searchword =AC.word
+INNER JOIN CTE2 AC2
+ON A.languagecode = AC2.languagecode
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+AND A.countrycode  IN ('MNE')
+AND A.sourceip IN ('193.40.40.164')
+GROUP BY searchword, A.languagecode
+) ,
+
+CTE4
+AS
+(
+SELECT 
+searchword AS searchword,
+B.languagecode,
+SUM(B.duration) AS sum_duration
+FROM uservisits B
+INNER JOIN ipaddresses BD
+ON B.sourceip=BD.ip
+INNER JOIN agents 
+ON   B.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
+AND B.countrycode  IN ('MNE')
+AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+GROUP BY searchword, B.languagecode
+) ,
+
+CTE5
+AS
+(
+SELECT DISTINCT A.languagecode  
+FROM uservisits A
+INNER JOIN ipaddresses BD
+ON A.sourceip=BD.ip
+INNER JOIN agents 
+ON   A.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.countrycode IN('MNE')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+),
+
+CTE6
+AS
+(SELECT
+searchword AS searchword,
+A.languagecode,
+COUNT(A.languagecode )  languagecode_cnt
+FROM uservisits A
+INNER JOIN ipaddresses BD
+ON A.sourceip=BD.ip
+INNER JOIN agents 
+ON   A.useragent = agentname 
+INNER JOIN searchwords AC
+ON A.searchword =AC.word
+INNER JOIN CTE5 AC2
+ON A.languagecode = AC2.languagecode
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.countrycode  IN ('MNE')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+AND AC.is_topic
+GROUP BY searchword, A.languagecode
+
+),
+
+
+CTE7
+AS
+(
+SELECT 
+searchword AS searchword,
+B.languagecode,
+SUM(B.duration) AS sum_duration
+FROM uservisits B 
+INNER JOIN ipaddresses BD
+ON B.sourceip=BD.ip
+INNER JOIN agents 
+ON   B.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1') 
+AND B.countrycode  IN ('MNE')
+AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+GROUP BY searchword, B.languagecode
+), 
+
+CTE8
+AS
+(
+SELECT DISTINCT A.languagecode  
+FROM uservisits A
+INNER JOIN ipaddresses BD
+ON A.sourceip=BD.ip
+INNER JOIN agents 
+ON   A.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE
+),
+
+CTE9
+AS
+(SELECT
+searchword AS searchword,
+A.languagecode,
+COUNT(A.languagecode )  languagecode_cnt
+FROM uservisits A
+INNER JOIN ipaddresses BD
+ON A.sourceip=BD.ip 
+INNER JOIN agents 
+ON   A.useragent = agentname
+INNER JOIN searchwords AC
+ON A.searchword =AC.word
+INNER JOIN CTE8 AC2
+ON A.languagecode = AC2.languagecode
+
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.countrycode  IN ('MNE')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
+AND AC.is_topic  
+GROUP BY searchword, A.languagecode
+
+),
+
+CTE10
+AS
+(
+SELECT 
+searchword AS searchword,
+B.languagecode,
+SUM(B.duration) AS sum_duration
+FROM uservisits B 
+INNER JOIN agents 
+ON   B.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND B.countrycode  IN ('MNE')
+AND B.sourceip IN ('193.40.40.164')
+AND B.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
+GROUP BY searchword, B.languagecode
+),
+
+CTE11
+AS
+(
+SELECT DISTINCT A.languagecode  
+FROM uservisits A
+INNER JOIN agents 
+ON   A.useragent = agentname 
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.sourceip IN ('193.40.40.164')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
+),
+
+CTE12
+AS
+(SELECT
+searchword AS searchword,
+A.languagecode,
+COUNT(A.languagecode )  languagecode_cnt
+FROM uservisits A 
+INNER JOIN agents 
+ON   A.useragent = agentname 
+INNER JOIN searchwords AC
+ON A.searchword =AC.word
+INNER JOIN CTE11 AC2
+ON A.languagecode = AC2.languagecode
+WHERE agents.operatingsystem = 'Windows 10' 
+AND agents.devicearch = 'x64'
+AND agents.browser IN ('Internet Explorer', 'Qbtuhtunyhwcqkjktthkymsxb/1.', 'Adabkjshehkwvvbdmahdwoku/5.1')
+AND A.countrycode  IN ('MNE')
+AND A.sourceip IN ('193.40.40.164')
+AND A.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
+AND AC.is_topic  
+GROUP BY searchword, A.languagecode
+),
+CTE13 AS
+(
+
+SELECT  '1' AS searchword,
+'ON DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE3 AS C2
+INNER JOIN CTE1 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+
+UNION ALL
+
+SELECT  '2' AS searchword,
+'OVER DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE3 AS C2
+INNER JOIN CTE1 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+
+UNION ALL
+
+SELECT  '3' AS searchword,
+'UNDER DURATION' AS where_duration,
+COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE3 AS C2
+INNER JOIN CTE1 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+),
+CTE14 AS
+(
+
+SELECT  
+  	'1' AS searchword,
+	'ON DURATION' AS where_duration,
+	COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
+    	THEN C1.languagecode
+   		END )AS sum_duration_DATA
+FROM CTE6 AS C2
+INNER JOIN CTE4 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+
+UNION ALL
+
+SELECT  '2' AS searchword,
+'OVER DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE6 AS C2
+INNER JOIN CTE4 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+
+UNION ALL
+
+SELECT  '3' AS searchword,
+'UNDER DURATION' AS where_duration,
+COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE6 AS C2
+INNER JOIN CTE4 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+),
+CTE15 AS
+(
+
+SELECT  '1' AS searchword,
+'ON DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM CTE9 AS C2
+INNER JOIN CTE7 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+GROUP BY C1.searchword, C1.languagecode
+),
+
+CTE16 AS
+(
+
+SELECT  '1' AS searchword,
+'ON DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration = 10000 
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM uservisits AS C2
+INNER JOIN CTE10 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+  AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE  
+GROUP BY C1.searchword, C1.languagecode
+    
+UNION ALL
+
+SELECT  '2' AS searchword,
+'OVER DURATION' AS where_duration,
+COUNT(DISTINCT CASE WHEN C1.sum_duration < 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM uservisits AS C2
+INNER JOIN CTE10 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
+GROUP BY C1.searchword, C1.languagecode
+
+UNION ALL
+
+SELECT  '3' AS searchword,
+'UNDER DURATION' AS where_duration,
+COUNT( DISTINCT CASE WHEN C1.sum_duration > 10000
+    THEN C1.languagecode
+   END )AS sum_duration_DATA
+FROM uservisits AS C2
+INNER JOIN CTE10 C1
+ON C1.languagecode = C2.languagecode
+AND C1.searchword=C2.searchword
+AND C2.visitdate between '1984-03-21'::DATE and '1984-03-23'::DATE    
+GROUP BY C1.searchword, C1.languagecode
 )
 
--- Final query combining the CTEs
-SELECT 
-    macos_uservisits.searchword,
-    macos_uservisits.languagecode,
-    macos_uservisits.sum_duration,
-    CASE 
-        WHEN macos_uservisits.languagecode IS NULL THEN 'Not Available'
-        ELSE macos_uservisits.languagecode
-    END AS language_description
-FROM macos_uservisits
-LEFT JOIN distinct_languages
-    ON macos_uservisits.languagecode = distinct_languages.languagecode
-LEFT JOIN all_languages_combined
-    ON macos_uservisits.languagecode = all_languages_combined.languagecode
-ORDER BY macos_uservisits.searchword;
+SELECT searchword,where_duration,SUM(sum_duration_DATA) FROM (
+
+SELECT searchword AS searchword,
+where_duration AS where_duration,
+(C1.sum_duration_DATA) AS sum_duration_DATA
+FROM CTE13 AS C1
+WHERE  0<>(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
+
+UNION ALL
+SELECT searchword AS searchword,
+where_duration AS where_duration,
+(C2.sum_duration_DATA) AS sum_duration_DATA
+FROM CTE16 AS C2
+WHERE  0<>(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
+
+UNION ALL
+SELECT searchword AS searchword,
+where_duration AS where_duration,
+(C3.sum_duration_DATA) AS sum_duration_DATA
+FROM CTE14 AS C3
+WHERE  0=(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
+
+UNION ALL
+SELECT searchword AS searchword,
+where_duration AS where_duration,
+(C4.sum_duration_DATA) AS sum_duration_DATA
+FROM CTE15 AS C4
+WHERE  0=(SELECT COUNT(ip) FROM ipaddresses WHERE ip IN ('193.40.40.164'))
+
+)
+GROUP BY searchword,where_duration;
 
 
 -- query 20
