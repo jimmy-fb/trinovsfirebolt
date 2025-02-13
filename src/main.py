@@ -61,6 +61,8 @@ def main():
                        help='Concurrent queries')
     parser.add_argument('--concurrency-duration-s', type=int, default=1,
                        help='The duration in seconds to use for each concurrency benchmark')
+    parser.add_argument('--seed', type=int, default=1,
+                       help='The seed of the random number generator for reproducibility')
     parser.add_argument('--output-dir', default='benchmark_results', 
                        help='Output directory')
     parser.add_argument('--execute-setup', action='store_true', 
@@ -73,7 +75,7 @@ def main():
     try:
         # Validate benchmark exists
         benchmark_path = validate_benchmark(args.benchmark_name)
-        
+
         # Parse vendors
         vendors = parse_vendors(args.vendors)
         logger.info(
@@ -98,7 +100,7 @@ def main():
 
         logger.info(f"Sequential benchmark results saved to: {args.output_dir}")
 
-        # Run concurrency benchmarks
+        # Run the concurrency benchmarks for one vendor at a time, one after another
         for vendor in vendors:
             logger.info(
                 f"Running concurrency benchmark '{args.benchmark_name}' for {args.concurrency_duration_s} seconds for vendor: {vendor}"
@@ -111,6 +113,7 @@ def main():
                 benchmark_duration_secs=args.concurrency_duration_s,
                 output_dir=args.output_dir,
                 benchmark_path=benchmark_path,
+                seed=args.seed,
             )
             runner.run_benchmark()
             logger.info(
@@ -123,6 +126,7 @@ def main():
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

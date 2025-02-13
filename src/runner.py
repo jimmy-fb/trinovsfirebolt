@@ -301,7 +301,9 @@ class BenchmarkRunner:
 @dataclass
 class ConcurrentQueryResult:
     query_name: str
+    query_id: int
     has_error: bool
+    num_output_rows: int
     start_unix_time: float
     stop_unix_time: float
 
@@ -316,6 +318,7 @@ class ConcurrentBenchmarkRunner:
         benchmark_duration_secs: int,
         output_dir: str,
         benchmark_path: str,
+        seed: int,
     ):
         self.benchmark_name = benchmark_name
         self.vendor = vendor
@@ -325,6 +328,7 @@ class ConcurrentBenchmarkRunner:
         self.benchmark_path = benchmark_path
         self.logger = logging.getLogger(__name__)
         self.connector_class = connectors.get_connector_class(self.vendor)
+        self.seed = seed
 
         # Load credentials
         with open(creds_file, "r") as f:
@@ -339,19 +343,21 @@ class ConcurrentBenchmarkRunner:
             self.queries = json.load(f)
         if not self.queries:
             raise ValueError(f"No benchmark queries found for vendor: {vendor}")
-        self.logger.info(f"Loaded benchmark queries for: {vendor}")
 
         # Get the names of the queries
         self.query_names = list(self.queries.keys())
+        self.logger.info(
+            f"Loaded {len(self.query_names)} benchmark queries for: {vendor}"
+        )
 
     def _get_sql_file(self, vendor):
         general_file = pathlib.Path(self.benchmark_path) / "queries.json"
         vendor_file = pathlib.Path(self.benchmark_path) / f"{vendor}" / "queries.json"
         return vendor_file if os.path.exists(vendor_file) else general_file
 
-    def _run_worker(self, id: int):
+    def _run_worker(self, worker_id: int, seed: int):
         # Seed the random number generator for reproducibility
-        rng = random.Random(id)
+        rng = random.Random(seed)
         # Each worker thread should execute the queries in a random order
         query_names_random_permutation = rng.sample(
             self.query_names, len(self.query_names)
@@ -364,6 +370,9 @@ class ConcurrentBenchmarkRunner:
         # Wait until all worker threads are ready
         self.start_barrier.wait()
 
+        # The query ID increases by one for each executed query
+        query_id = 0
+
         # Repeatedly iterate over the queries until the main thread sets `self.stop_event`
         for query_name in itertools.cycle(query_names_random_permutation):
             # Choose a random variation of the query
@@ -371,7 +380,7 @@ class ConcurrentBenchmarkRunner:
             try:
                 has_error = False
                 start_time = time.time()
-                connector.execute_query(random_query_variation)
+                num_output_rows = len(connector.execute_query(random_query_variation))
                 stop_time = time.time()
             except Exception as e:
                 has_error = True
@@ -382,18 +391,21 @@ class ConcurrentBenchmarkRunner:
             if self.stop_event.is_set():
                 # Stop the worker thread. The current query did not finish in time and should not
                 # be included in `self.worker_thread_results`.
-                self.worker_thread_results[id] = results
+                self.worker_thread_results[worker_id] = results
                 connector.close()
                 return
             else:
                 results.append(
                     ConcurrentQueryResult(
                         query_name=query_name,
+                        query_id=query_id,
                         has_error=has_error,
+                        num_output_rows=0 if has_error else num_output_rows,
                         start_unix_time=start_time,
                         stop_unix_time=stop_time,
                     )
                 )
+                query_id += 1
 
     def _write_csv(self):
         # Ensure the directory exists
@@ -403,7 +415,9 @@ class ConcurrentBenchmarkRunner:
             field_names = [
                 "worker_id",
                 "query_name",
+                "query_id",
                 "has_error",
+                "num_output_rows",
                 "start_unix_time",
                 "stop_unix_time",
             ]
@@ -416,12 +430,14 @@ class ConcurrentBenchmarkRunner:
                     row = {
                         "worker_id": worker_id,
                         "query_name": result.query_name,
+                        "query_id": result.query_id,
                         "has_error": result.has_error,
+                        "num_output_rows": result.num_output_rows,
                         "start_unix_time": result.start_unix_time,
                         "stop_unix_time": result.stop_unix_time,
                     }
                     writer.writerow(row)
-        self.logger.info(f"Results exported to {csv_file_path}")
+        self.logger.info(f"Concurrency benchmark results exported to {csv_file_path}")
 
     def run_benchmark(self):
         self.logger.info(f"Running concurrency benchmark for {self.vendor.upper()}...")
@@ -429,10 +445,16 @@ class ConcurrentBenchmarkRunner:
         self.stop_event = threading.Event()
         self.worker_thread_results = [[] for _ in range(self.concurrency)]
 
+        # Get random seeds for the worker threads (but seed the random seed generator with `self.seed` for reproducibility)
+        rng = random.Random(self.seed)
+        random_seeds = rng.sample(range(42_000_000), self.concurrency)
+
         # Start `self.concurrency` worker threads
         threads = []
         for i in range(self.concurrency):
-            thread = threading.Thread(target=self._run_worker, args=(i,))
+            thread = threading.Thread(
+                target=self._run_worker, args=(i, random_seeds[i])
+            )
             threads.append(thread)
             thread.start()
 
