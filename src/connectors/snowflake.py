@@ -43,6 +43,10 @@ class SnowflakeConnector:
             )
             self._cursor = self._conn.cursor(snowflake.connector.DictCursor)
             self._cursor.execute("ALTER SESSION SET USE_CACHED_RESULT = FALSE;")
+            self._cursor.execute("SELECT hash_agg(*) FROM agents")
+            self._cursor.execute("SELECT hash_agg(*) FROM ipaddresses")
+            self._cursor.execute("SELECT hash_agg(*) FROM rankings")
+            self._cursor.execute("SELECT hash_agg(*) FROM searchwords")
 
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """

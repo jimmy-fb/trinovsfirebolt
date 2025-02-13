@@ -41,6 +41,10 @@ class FireboltConnector:
             )
             self.cursor = self._conn.cursor()
             self.cursor.execute("SET enable_result_cache=false")
+            self.cursor.execute("SELECT hash_agg(*) FROM agents")
+            self.cursor.execute("SELECT hash_agg(*) FROM ipaddresses")
+            self.cursor.execute("SELECT hash_agg(*) FROM rankings")
+            self.cursor.execute("SELECT hash_agg(*) FROM searchwords")
 
     def execute_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
