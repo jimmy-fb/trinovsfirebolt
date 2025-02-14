@@ -364,7 +364,7 @@ class ConcurrentBenchmarkRunner:
         )
         # Connect to the database
         connector = self.connector_class(config=self.credentials)
-        connector.connect()
+        connector.connect(True)
         results = []
 
         # Wait until all worker threads are ready
