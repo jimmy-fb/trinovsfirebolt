@@ -5,7 +5,6 @@ dotenv.config();
 const { Firebolt } = require("firebolt-sdk");
 const snowflake = require("snowflake-sdk");
 const { Client: RedshiftClient } = require("pg");
-const { createClient } = require('@clickhouse/client');
 
 const app = express();
 app.use(express.json());
