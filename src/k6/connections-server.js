@@ -97,9 +97,7 @@ const connections = new Map();
 
 async function getFireboltConnection(vuID) {
   if (!connections.has(vuID)) {
-    const firebolt = Firebolt({
-      apiEndpoint: "api.staging.firebolt.io"
-   });
+    const firebolt = Firebolt();
     const conn = await firebolt.connect({
       auth: {
         client_id: FIREBOLT_CLIENT_ID,
