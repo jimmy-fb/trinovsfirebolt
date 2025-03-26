@@ -5,7 +5,7 @@ import queriesFirebolt from '../../benchmarks/FireScale_k6/queries_firebolt.js';
 import queriesSnowflake from '../../benchmarks/FireScale_k6/queries_snowflake.js';
 import queriesRedshift from '../../benchmarks/FireScale_k6/queries_redshift.js';
 
-const vendor = __ENV.VENDOR;
+const vendor = __ENV.VENDOR || "firebolt";
 let queries;
 
 if (vendor === 'firebolt') {
@@ -21,7 +21,7 @@ if (vendor === 'firebolt') {
 // k6 Options
 export const options = {
   vus: __ENV.VUS ? parseInt(__ENV.VUS) : 10,  // Get VUs from environment variable, default to 10 virtual users (parallel streams)
-  duration: "1m"
+  duration: __ENV.duration || "1m"
 };
 
 

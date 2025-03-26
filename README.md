@@ -92,6 +92,23 @@ This project allows for flexibility in how SQL files are used:
 
 This structure allows you to easily manage and execute queries that are tailored to specific vendors while still providing a common set of queries for all vendors.
 
+### K6 benchmark
+
+To run the k6 benchmark start a local client connections SDK proxy in a terminal
+
+```bash
+/src/k6$ node connections-cluster.js
+```
+
+in another terminal run
+
+```bash
+/src/k6$ set -o allexport; source ../../config/k6settings.env; set +o allexport; 
+/src/k6$ k6 run fb-benchmark-k6.js
+```
+
+`config/k6settings.env` contains settings for number of virtual users `VUS`, `duration`, `VENDOR` to run benchmark for, `CONNECTIONS_PER_SERVER` and `numCPUs` of the client connections SDK proxy.
+
 ## Directory Structure
 
 ```
@@ -141,7 +158,8 @@ project-root/
 │   ├── credentials/         # Contains credential files
 │   │   ├── credentials.json  # Single credentials file for all vendors (ignored)
 │   │   └── sample_credentials.json  # Sample credentials file with dummy data
-│   └── settings.py     
+│   ├── k6settings.env   # k6 test settings
+│   └── settings.py      
 │
 ├── requirements.txt         # Python package dependencies
 ├── run_benchmark.sh        # Bash script to run the benchmark

@@ -1,6 +1,68 @@
 const express = require("express");
 const dotenv = require("dotenv");
-dotenv.config();
+const fs = require("fs");
+const path = require("path");
+
+dotenv.config({ path: "../../config/credentials/k6config.env" });
+
+function parseArgs(argv) {
+  const argsMap = {};
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg.startsWith("--")) {
+      const key = arg.slice(2);
+      let value = true;
+      if (i + 1 < argv.length && !argv[i + 1].startsWith("--")) {
+        value = argv[i + 1];
+        i++;
+      }
+      argsMap[key] = value;
+    }
+  }
+  return argsMap;
+}
+
+const argMap = parseArgs(process.argv.slice(2));
+const credsFile = argMap.creds || "../../config/credentials/credentials.json";
+const configPath = path.isAbsolute(credsFile)
+  ? credsFile
+  : path.resolve(process.cwd(), credsFile);  
+let fileConfig = {};
+try {
+  if (fs.existsSync(configPath)) {
+    const rawJson = fs.readFileSync(configPath, "utf-8");
+    fileConfig = JSON.parse(rawJson);
+  }
+} catch (err) {
+  console.warn("Could not read or parse credentials file:", err);
+}
+
+
+const fileFirebolt = fileConfig.firebolt || {};
+const fileFireboltAuth = fileFirebolt.auth || {};
+const FIREBOLT_ENGINE        = fileFirebolt.engine_name || process.env.FIREBOLT_ENGINE;
+const FIREBOLT_DB            = fileFirebolt.database    || process.env.FIREBOLT_DB;
+const FIREBOLT_ACCOUNT       = fileFirebolt.account_name || process.env.FIREBOLT_ACCOUNT;
+const FIREBOLT_CLIENT_ID     = fileFireboltAuth.id      || process.env.FIREBOLT_CLIENT_ID;
+const FIREBOLT_CLIENT_SECRET = fileFireboltAuth.secret  || process.env.FIREBOLT_CLIENT_SECRET;
+
+const fileSnowflake = fileConfig.snowflake || {};
+const SNOWFLAKE_ACCOUNT      = fileSnowflake.account    || process.env.SNOWFLAKE_ACCOUNT;
+const SNOWFLAKE_USERNAME     = fileSnowflake.user       || process.env.SNOWFLAKE_USERNAME;
+const SNOWFLAKE_KEY_PATH     = fileSnowflake.keyPath    || process.env.SNOWFLAKE_KEY_PATH;
+const SNOWFLAKE_PASSPHRASE   = fileSnowflake.passphrase || process.env.SNOWFLAKE_PASSPHRASE;
+const SNOWFLAKE_WAREHOUSE    = fileSnowflake.warehouse  || process.env.SNOWFLAKE_WAREHOUSE;
+const SNOWFLAKE_DATABASE     = fileSnowflake.database   || process.env.SNOWFLAKE_DATABASE;
+const SNOWFLAKE_SCHEMA       = fileSnowflake.schema     || process.env.SNOWFLAKE_SCHEMA;
+
+const fileRedshift = fileConfig.redshift || {};
+const REDSHIFT_HOST          = fileRedshift.host        || process.env.REDSHIFT_HOST;
+const REDSHIFT_PORT          = fileRedshift.port        || process.env.REDSHIFT_PORT;
+const REDSHIFT_DATABASE      = fileRedshift.database    || process.env.REDSHIFT_DATABASE;
+const REDSHIFT_USER          = fileRedshift.user        || process.env.REDSHIFT_USER;
+const REDSHIFT_PASSWORD      = fileRedshift.password    || process.env.REDSHIFT_PASSWORD;
+const REDSHIFT_SSL           = fileRedshift.ssl         || process.env.REDSHIFT_SSL;
+
 
 const { Firebolt } = require("firebolt-sdk");
 const snowflake = require("snowflake-sdk");
@@ -14,9 +76,8 @@ app.use(express.json());
  * (in connections-cluster.js) is >= the total number of VUs
  * you intend on using
  */
-const CONNECTIONS_PER_SERVER = 8;
-
-const VENDOR = process.env.VENDOR;
+const CONNECTIONS_PER_SERVER = process.env.CONNECTIONS_PER_SERVER || 10;
+const VENDOR = process.env.VENDOR || "firebolt";
 
 if (VENDOR === "snowflake") {
   snowflake.configure({
@@ -26,32 +87,6 @@ if (VENDOR === "snowflake") {
   });
 }
 
-const {
-  FIREBOLT_ENGINE,
-  FIREBOLT_DB,
-  FIREBOLT_CLIENT_ID,
-  FIREBOLT_CLIENT_SECRET,
-  FIREBOLT_ACCOUNT
-} = process.env;
-
-const {
-  SNOWFLAKE_ACCOUNT,
-  SNOWFLAKE_USERNAME,
-  SNOWFLAKE_KEY_PATH,
-  SNOWFLAKE_PASSPHRASE,
-  SNOWFLAKE_WAREHOUSE,
-  SNOWFLAKE_DATABASE,
-  SNOWFLAKE_SCHEMA
-} = process.env;
-
-const {
-  REDSHIFT_HOST,
-  REDSHIFT_PORT,
-  REDSHIFT_DATABASE,
-  REDSHIFT_USER,
-  REDSHIFT_PASSWORD,
-  REDSHIFT_SSL
-} = process.env;
 
 
 // Map for storing connections by VU ID
@@ -62,7 +97,9 @@ const connections = new Map();
 
 async function getFireboltConnection(vuID) {
   if (!connections.has(vuID)) {
-    const firebolt = Firebolt();
+    const firebolt = Firebolt({
+      apiEndpoint: "api.staging.firebolt.io"
+   });
     const conn = await firebolt.connect({
       auth: {
         client_id: FIREBOLT_CLIENT_ID,
