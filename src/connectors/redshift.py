@@ -41,7 +41,6 @@ class RedshiftConnector:
         self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         self._cursor.execute("SET enable_result_cache_for_session TO off;")
 
-
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """
         Execute a SQL query and return results as a list of dictionaries.
