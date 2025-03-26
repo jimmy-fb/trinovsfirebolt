@@ -29,7 +29,7 @@ class RedshiftConnector:
             raise ValueError(f"Missing required configuration parameters: {missing_params}")
 
     @contextmanager
-    def connect(self, is_concurrent=False):
+    def connect(self):
         """Context manager for database connections."""
         self._conn = psycopg2.connect(
             host=self.config['host'],
@@ -40,11 +40,6 @@ class RedshiftConnector:
         )
         self._cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         self._cursor.execute("SET enable_result_cache_for_session TO off;")
-        if not is_concurrent:
-            self._cursor.execute("SELECT MEDIAN(FNV_HASH(id, FNV_HASH(agentname, FNV_HASH(operatingsystem, FNV_HASH(devicearch, FNV_HASH(browser)))))) FROM agents;")
-            self._cursor.execute("SELECT MEDIAN(FNV_HASH(ip, FNV_HASH(autonomoussystem, FNV_HASH(asname)))) FROM ipaddresses;")
-            self._cursor.execute("SELECT MEDIAN(FNV_HASH(word, FNV_HASH(word_hash, FNV_HASH(word_id, FNV_HASH(firstseen, FNV_HASH(is_topic)))))) FROM searchwords;")
-
 
     def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
         """

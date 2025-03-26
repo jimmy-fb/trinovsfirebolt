@@ -27,7 +27,7 @@ class FireboltConnector:
         if missing_params:
             raise ValueError(f"Missing required configuration parameters: {missing_params}")
 
-    def connect(self, is_concurrent=False) -> None:
+    def connect(self) -> None:
         """Connect to Firebolt using stored configuration."""
         if not self._conn:
             self._conn = connect(
@@ -41,11 +41,6 @@ class FireboltConnector:
             )
             self.cursor = self._conn.cursor()
             self.cursor.execute("SET enable_result_cache=false")
-            if not is_concurrent:
-                self.cursor.execute("SELECT hash_agg(*) FROM agents")
-                self.cursor.execute("SELECT hash_agg(*) FROM ipaddresses")
-                self.cursor.execute("SELECT hash_agg(*) FROM rankings")
-                self.cursor.execute("SELECT hash_agg(*) FROM searchwords")
 
     def execute_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """

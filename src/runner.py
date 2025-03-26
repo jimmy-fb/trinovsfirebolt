@@ -214,6 +214,11 @@ class BenchmarkRunner:
                     self.logger.warning("Skipping benchmark due to setup failure.")
                     return vendor, []
 
+            if not self._execute_warmup_script(vendor): 
+                # Only run benchmark if warmup succeeded
+                self.logger.warning("Skipping benchmark due to warmup failure.")
+                return vendor, []
+
             vendor_results = []
 
             try:
@@ -297,6 +302,20 @@ class BenchmarkRunner:
             return False
         return True
 
+    def _execute_warmup_script(self, vendor: str):
+        """Execute the warmup SQL script for the vendor."""
+        try:
+            # Load the warmup SQL file for the vendor
+            warmup_file = self._get_sql_file(vendor, "warmup")
+            warmup_queries = self._load_queries(warmup_file)
+            for query in warmup_queries:
+                self.connectors[vendor].execute_query(query)
+            self.logger.info(f"Executed warmup script: {warmup_file}")
+        except Exception as e:
+            self.logger.error(f"Error executing warmup script {warmup_file}: {str(e)}")
+            return False
+        return True
+
 
 @dataclass
 class ConcurrentQueryResult:
@@ -364,7 +383,7 @@ class ConcurrentBenchmarkRunner:
         )
         # Connect to the database
         connector = self.connector_class(config=self.credentials)
-        connector.connect(True)
+        connector.connect()
         results = []
 
         # Wait until all worker threads are ready
