@@ -25,11 +25,11 @@ def validate_benchmark(benchmark_name: str) -> str:
     Raises:
         ValueError: If benchmark directory doesn't exist
     """
-    benchmark_path = Path(__file__).parent.parent / 'benchmarks' / benchmark_name
+    benchmark_path = Path(__file__).parent.parent.parent.parent / 'benchmarks' / benchmark_name
     if not benchmark_path.exists():
         raise ValueError(
             f"Benchmark '{benchmark_name}' not found in benchmarks directory. "
-            f"Available benchmarks: {', '.join(os.listdir(Path(__file__).parent / 'benchmarks'))}"
+            f"Available benchmarks: {', '.join(os.listdir(Path(__file__).parent.parent.parent / 'benchmarks'))}"
         )
     return str(benchmark_path)
 
@@ -51,7 +51,7 @@ def main():
     parser = argparse.ArgumentParser(description='Database Benchmark Runner')
     parser.add_argument('benchmark_name', help='Name of the benchmark to run')
     parser.add_argument('--creds', dest='creds_file', 
-                       default='config/credentials/credentials.json',
+                       default='../../config/credentials/credentials.json',
                        help='Path to credentials file')
     parser.add_argument('--vendors', required=True,
                        help='Comma-separated list of vendors to benchmark (e.g., snowflake,firebolt)')
