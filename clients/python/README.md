@@ -97,13 +97,13 @@ This structure allows you to easily manage and execute queries that are tailored
 To run the k6 benchmark start a local client connections SDK proxy in a terminal
 
 ```bash
+/src/k6$ EXPORT VENDOR=<vendor>
 /src/k6$ node connections-cluster.js
 ```
 
 in another terminal run
 
 ```bash
-/src/k6$ set -o allexport; source ../../config/k6settings.env; set +o allexport; 
 /src/k6$ k6 run fb-benchmark-k6.js
 ```
 
