@@ -1,132 +1,34 @@
-# Benchmark Tool
+# Firebolt Benchmarks
 
-## Description
+In this repo, you’ll find the FireScale benchmark, as well as the benchmarking clients
+and benchmark results that Firebolt has published. This includes the DDL and queries
+for setting up and running FireScale on different vendors, as well as the results for
+how various vendors performed on FireScale.
 
-This project provides a benchmarking tool for various data warehouse vendors, allowing users to compare performance across different systems. The tool supports multiple vendors, including Snowflake, Firebolt, and BigQuery, and can execute custom SQL queries for benchmarking.
+## FireScale Benchmark Results
 
-## Features
+[To view benchmark results, click here.](results/)
 
-- Connect to multiple data warehouse vendors.
-- Execute benchmark queries and collect results.
-- Optionally execute a setup SQL file before running benchmarks.
-- Easily configurable through command-line arguments.
-- Supports both general SQL files for benchmarks and vendor-specific SQL files.
+## Run FireScale Yourself
 
-## Requirements
+Firebolt has provided two clients in this repo: one written in Python, and one written
+with Node.js with Grafana K6. The Python client is for power runs (executing one query
+at a time in a sequential pattern) and for concurrency benchmarking with low expected
+query throughput (<100 QPS). The K6 client is for benchmarking concurrent scenarios
+with high query volumes and hundreds or thousands of queries being completed each second.
 
-Make sure to install the required packages listed in `requirements.txt`.
+The Python client can be extended with benchmarks beyond just FireScale, though at this
+time, only FireScale and TPCH queries are provided.
 
-```bash
-pip install -r requirements.txt
-```
+View each client:
 
-## Credential Files
-
-To connect to the data warehouse vendors, you need to provide a single credentials file located at `config/credentials/credentials.json`. The expected format for this file is as follows:
-
-```json
-{
-    "snowflake": {
-        "account": "your_account",
-        "user": "your_username",
-        "password": "your_password",
-        "database": "your_database",
-        "schema": "your_schema",
-        "warehouse": "your_warehouse"
-    },
-    "redshift": {
-        "host": "your_cluster.region.redshift.amazonaws.com",
-        "port": 5439,
-        "database": "your_database",
-        "user": "your_user",
-        "password": "your_password"
-    },
-    "firebolt": {
-        "account_name": "your firebolt account name",
-        "database": "your_database",
-        "engine_name": "your_engine",
-        "auth": {
-            "id": "your firebolt service account id",
-            "secret": "your firebolt service account secret"
-        }
-    },
-    "bigquery": {
-        "project_id": "your_project_id",
-        "dataset": "your_dataset",
-        "key": "your json key generated from google cloud"
-    }
-}
-```
-
-## Usage
-
-To run the benchmark, use the following command:
-
-```bash
-python -m src.main <benchmark_name> --vendors <vendor1,vendor2,...> [--execute-setup <True|False>]
-```
-
-### Options
-
-- `benchmark_name`: The name of the benchmark to run.
-- `--vendors`: Comma-separated list of vendors to benchmark (e.g., `snowflake,firebolt`).
-- `--execute-setup`: (Optional) Set to `True` to execute the `setup.sql` file before running benchmarks. Default is `False`.
-- `--pool-size`: (Optional) Connection pool size. Default is `5`.
-- `--concurrency`: (Optional) Concurrency level. Default is `1`.
-- `--output-dir`: (Optional) Output directory. Default is `benchmark_results`.
-- `--creds`: (Optional) Path to credentials file. Default is `config/credentials/credentials.json`.
-
-### Example
-
-```bash
-python -m src.main my_benchmark --vendors snowflake,firebolt --execute-setup True
-```
-
-## Flexibility in SQL File Usage
-
-This project allows for flexibility in how SQL files are used:
-
-- **General SQL Files**: Each benchmark folder contains a general `benchmark.sql` and `setup.sql` file that can be used for all vendors. These files contain common queries that apply to all vendors.
-
-- **Vendor-Specific SQL Files**: If a vendor has specific requirements or optimizations, you can create a `benchmark.sql` and `setup.sql` file within the vendor's folder. If these vendor-specific files exist, they will be used instead of the general files.
-
-This structure allows you to easily manage and execute queries that are tailored to specific vendors while still providing a common set of queries for all vendors.
-
-### K6 benchmark
-
-To run the k6 benchmark start a local client connections SDK proxy in a terminal
-
-```bash
-/src/k6$ node connections-cluster.js
-```
-
-in another terminal run
-
-```bash
-/src/k6$ set -o allexport; source ../../config/k6settings.env; set +o allexport; 
-/src/k6$ k6 run fb-benchmark-k6.js
-```
-
-`config/k6settings.env` contains settings for number of virtual users `VUS`, `duration`, `VENDOR` to run benchmark for, `CONNECTIONS_PER_SERVER` and `numCPUs` of the client connections SDK proxy.
+* [Python client](/clients/python/)
+* [K6 client](/clients/k6/)
 
 ## Directory Structure
 
 ```
 project-root/
-│
-├── src/
-│   ├── connectors/          # Contains connector implementations for each vendor
-│   │   ├── base.py
-│   │   ├── firebolt.py
-│   │   ├── bigquery.py
-│   │   ├── redshift.py
-│   │   └── snowflake.py
-│   ├── exporters/          # Contains exporter implementations for each vendor
-│   │   ├── base.py
-│   │   ├── csv_exporter.py
-│   │   └── visual_exporter.py
-│   ├── main.py              # Entry point for the benchmarking tool
-│   └── runner.py            # Benchmark runner logic
 │
 ├── benchmarks/              # Contains benchmark definitions
 │   ├── sample_benchmark/
@@ -135,34 +37,78 @@ project-root/
 │   │   └── firebolt/
 │   │       └── setup.sql          # firebolt specific setup SQL file
 │   │   
-│   └── FireBench/
-│       ├── firebolt/
-│       │   ├── benchmark.sql      # firebolt specific benchmark SQL file
-│       │   └── setup.sql          # firebolt specific setup SQL file
-│       │
-│       └── snowflake/
-│       |   ├── benchmark.sql      # snowflake specific benchmark SQL file
-│       |   └── setup.sql          # snowflake specific setup SQL file
-│       │
-│       └── bigquery/
-│       |   ├── benchmark.sql      # bigquery specific benchmark SQL file
-│       |   └── setup.sql          # bigquery specific setup SQL file
-│       │
-│       └── redshift/
-│           ├── benchmark.sql      # redshift specific benchmark SQL file
-│           └── setup.sql          # redshift specific setup SQL file
-│
-├── tests/                   # Contains unit and integration tests
-│
+│   ├── FireScale/
+│   │   ├── firebolt/
+│   │   │   ├── benchmark.sql      # firebolt specific benchmark SQL file
+│   │   │   ├── setup.sql          # firebolt specific setup SQL file
+│   │   |   ├── warmup.sql         # firebolt specific warmup SQL file
+│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
+│   │   │
+│   │   ├── snowflake/
+│   │   |   ├── benchmark.sql      # snowflake specific benchmark SQL file
+│   │   |   ├── setup.sql          # snowflake specific setup SQL file
+│   │   |   ├── warmup.sql         # snowflake specific warmup SQL file
+│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
+│   │   │
+│   │   ├── bigquery/
+│   │   |   ├── benchmark.sql      # bigquery specific benchmark SQL file
+│   │   |   └── setup.sql          # bigquery specific setup SQL file
+│   │   │
+│   │   ├── redshift/
+│   │   |   ├── benchmark.sql      # redshift specific benchmark SQL file
+│   │   |   ├── setup.sql          # redshift specific setup SQL file
+│   │   |   ├── warmup.sql         # redshift specific warmup SQL file
+│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
+|   |   |
+│   |   └── warmup.sql    # generic SQL warmup file for FireScale
+|   |
+|   ├── FireScale_k6/   # query files for K6 concurrent benchmarking for each vendor
+|   |   ├── queries_firebolt.js
+|   |   ├── queries_redshift.js
+|   |   └── queries_snowflake.js
+|   |
+|   └── tpch/
+|       ├── firebolt/
+|       |   └── benchmark.sql      # TPCH queries for Firebolt
+|       └── warmup.sql    # generic SQL warmup file for TPCH benchmark
+|
+├── clients/
+│   ├── python/
+|   |   ├── src/
+|   |   │   ├── connectors/          # Contains connector implementations
+|   |   │   │   ├── base.py
+|   |   │   │   ├── firebolt.py
+|   |   │   │   ├── bigquery.py
+|   |   │   │   ├── redshift.py
+|   |   │   │   └── snowflake.py
+|   |   |   ├── exporters/           # Contains exporter implementations
+|   |   │   │   ├── base.py
+|   |   │   │   ├── csv_exporter.py
+|   |   │   │   └── visual_exporter.py
+|   |   │   ├── main.py              # Entry point for the Python client tool
+|   |   │   └── runner.py            # Python benchmark runner logic
+|   |   ├── README.md                # Python client documentation
+|   |   └── requirements.txt         # Python package dependencies
+|   |
+│   └── k6/
+|       ├── connections-cluster.js   # entrypoint for K6 benchmarking
+|       ├── connections-server.js    # connections to vendors for K6
+|       ├── fb-benchmark-k6.js       # K6 benchmark runner
+|       ├── package-lock.json        
+|       ├── package.json
+|       └── README.md                # K6 client documentation
+|
 ├── config/                  # Contains configuration files for the application
 │   ├── credentials/         # Contains credential files
 │   │   ├── credentials.json  # Single credentials file for all vendors (ignored)
 │   │   └── sample_credentials.json  # Sample credentials file with dummy data
-│   ├── k6settings.env   # k6 test settings
-│   └── settings.py      
-│
+│   ├── k6config.json   # k6 configuration options
+│   └── settings.py     # python client settings (not recommneded to change)
+|
+├── results/        # benchmark results for various benchmarks and vendors
+|   └── ...
+|
 ├── requirements.txt         # Python package dependencies
-├── run_benchmark.sh        # Bash script to run the benchmark
 ├── LICENSE                # MIT License
 └── README.md                # Project documentation
 ```

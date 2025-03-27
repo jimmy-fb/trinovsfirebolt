@@ -1,9 +1,6 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
-
-dotenv.config({ path: "../../config/credentials/k6config.env" });
 
 function parseArgs(argv) {
   const argsMap = {};
@@ -24,44 +21,54 @@ function parseArgs(argv) {
 
 const argMap = parseArgs(process.argv.slice(2));
 const credsFile = argMap.creds || "../../config/credentials/credentials.json";
-const configPath = path.isAbsolute(credsFile)
+const credsPath = path.isAbsolute(credsFile)
   ? credsFile
-  : path.resolve(process.cwd(), credsFile);  
-let fileConfig = {};
+  : path.resolve(process.cwd(), credsFile);
+let credsConfig = {};
 try {
-  if (fs.existsSync(configPath)) {
-    const rawJson = fs.readFileSync(configPath, "utf-8");
-    fileConfig = JSON.parse(rawJson);
+  if (fs.existsSync(credsPath)) {
+    const rawCredsJson = fs.readFileSync(credsPath, "utf-8");
+    credsConfig = JSON.parse(rawCredsJson);
   }
 } catch (err) {
   console.warn("Could not read or parse credentials file:", err);
 }
 
+const k6ConfigPath = "../../config/k6config.json"; 
+let k6Config = {} 
+try {
+  if (fs.existsSync(k6ConfigPath)) {
+    const rawConfigJson = fs.readFileSync(k6ConfigPath, "utf-8");
+    k6Config = JSON.parse(rawConfigJson);
+  }
+} catch (err) {
+  console.warn("Could not read or parse K6 config file:", err);
+}
 
-const fileFirebolt = fileConfig.firebolt || {};
-const fileFireboltAuth = fileFirebolt.auth || {};
-const FIREBOLT_ENGINE        = fileFirebolt.engine_name || process.env.FIREBOLT_ENGINE;
-const FIREBOLT_DB            = fileFirebolt.database    || process.env.FIREBOLT_DB;
-const FIREBOLT_ACCOUNT       = fileFirebolt.account_name || process.env.FIREBOLT_ACCOUNT;
-const FIREBOLT_CLIENT_ID     = fileFireboltAuth.id      || process.env.FIREBOLT_CLIENT_ID;
-const FIREBOLT_CLIENT_SECRET = fileFireboltAuth.secret  || process.env.FIREBOLT_CLIENT_SECRET;
 
-const fileSnowflake = fileConfig.snowflake || {};
-const SNOWFLAKE_ACCOUNT      = fileSnowflake.account    || process.env.SNOWFLAKE_ACCOUNT;
-const SNOWFLAKE_USERNAME     = fileSnowflake.user       || process.env.SNOWFLAKE_USERNAME;
-const SNOWFLAKE_KEY_PATH     = fileSnowflake.keyPath    || process.env.SNOWFLAKE_KEY_PATH;
-const SNOWFLAKE_PASSPHRASE   = fileSnowflake.passphrase || process.env.SNOWFLAKE_PASSPHRASE;
-const SNOWFLAKE_WAREHOUSE    = fileSnowflake.warehouse  || process.env.SNOWFLAKE_WAREHOUSE;
-const SNOWFLAKE_DATABASE     = fileSnowflake.database   || process.env.SNOWFLAKE_DATABASE;
-const SNOWFLAKE_SCHEMA       = fileSnowflake.schema     || process.env.SNOWFLAKE_SCHEMA;
+const fileFirebolt = credsConfig.firebolt ?? {};
+const fileFireboltAuth = fileFirebolt.auth ?? {};
+const FIREBOLT_ENGINE        = fileFirebolt.engine_name ?? process.env.FIREBOLT_ENGINE;
+const FIREBOLT_DB            = fileFirebolt.database    ?? process.env.FIREBOLT_DB;
+const FIREBOLT_ACCOUNT       = fileFirebolt.account_name ?? process.env.FIREBOLT_ACCOUNT;
+const FIREBOLT_CLIENT_ID     = fileFireboltAuth.id      ?? process.env.FIREBOLT_CLIENT_ID;
+const FIREBOLT_CLIENT_SECRET = fileFireboltAuth.secret  ?? process.env.FIREBOLT_CLIENT_SECRET;
 
-const fileRedshift = fileConfig.redshift || {};
-const REDSHIFT_HOST          = fileRedshift.host        || process.env.REDSHIFT_HOST;
-const REDSHIFT_PORT          = fileRedshift.port        || process.env.REDSHIFT_PORT;
-const REDSHIFT_DATABASE      = fileRedshift.database    || process.env.REDSHIFT_DATABASE;
-const REDSHIFT_USER          = fileRedshift.user        || process.env.REDSHIFT_USER;
-const REDSHIFT_PASSWORD      = fileRedshift.password    || process.env.REDSHIFT_PASSWORD;
-const REDSHIFT_SSL           = fileRedshift.ssl         || process.env.REDSHIFT_SSL;
+const fileSnowflake = credsConfig.snowflake ?? {};
+const SNOWFLAKE_ACCOUNT      = fileSnowflake.account    ?? process.env.SNOWFLAKE_ACCOUNT;
+const SNOWFLAKE_USERNAME     = fileSnowflake.user       ?? process.env.SNOWFLAKE_USERNAME;
+const SNOWFLAKE_PASSWORD     = fileSnowflake.password   ?? process.env.SNOWFLAKE_PASSWORD;
+const SNOWFLAKE_WAREHOUSE    = fileSnowflake.warehouse  ?? process.env.SNOWFLAKE_WAREHOUSE;
+const SNOWFLAKE_DATABASE     = fileSnowflake.database   ?? process.env.SNOWFLAKE_DATABASE;
+const SNOWFLAKE_SCHEMA       = fileSnowflake.schema     ?? process.env.SNOWFLAKE_SCHEMA;
+
+const fileRedshift = credsConfig.redshift ?? {};
+const REDSHIFT_HOST          = fileRedshift.host        ?? process.env.REDSHIFT_HOST;
+const REDSHIFT_PORT          = fileRedshift.port        ?? process.env.REDSHIFT_PORT;
+const REDSHIFT_DATABASE      = fileRedshift.database    ?? process.env.REDSHIFT_DATABASE;
+const REDSHIFT_USER          = fileRedshift.user        ?? process.env.REDSHIFT_USER;
+const REDSHIFT_PASSWORD      = fileRedshift.password    ?? process.env.REDSHIFT_PASSWORD;
+const REDSHIFT_SSL           = fileRedshift.ssl         ?? process.env.REDSHIFT_SSL;
 
 
 const { Firebolt } = require("firebolt-sdk");
@@ -71,13 +78,8 @@ const { Client: RedshiftClient } = require("pg");
 const app = express();
 app.use(express.json());
 
-/*
- * Change this value so that CONNECTIONS_PER_SERVER * numCPUs
- * (in connections-cluster.js) is >= the total number of VUs
- * you intend on using
- */
-const CONNECTIONS_PER_SERVER = process.env.CONNECTIONS_PER_SERVER || 10;
-const VENDOR = process.env.VENDOR || "firebolt";
+const CONNECTIONS_PER_THREAD = k6Config.connections_per_thread || 10;
+const VENDOR = k6Config.vendor ?? "firebolt";
 
 if (VENDOR === "snowflake") {
   snowflake.configure({
@@ -128,10 +130,8 @@ async function getSnowflakeConnection(vuID, privateKey) {
   if (!connections.has(vuID)) {
     const conn = snowflake.createConnection({
       account: SNOWFLAKE_ACCOUNT,
-      authenticator: "SNOWFLAKE_JWT",
       username: SNOWFLAKE_USERNAME,
-      privateKeyPath: SNOWFLAKE_KEY_PATH,
-      privateKeyPass: SNOWFLAKE_PASSPHRASE,
+      password: SNOWFLAKE_PASSWORD,
       warehouse: SNOWFLAKE_WAREHOUSE,
       database: SNOWFLAKE_DATABASE,
       schema: SNOWFLAKE_SCHEMA,
@@ -190,11 +190,11 @@ app.post("/execute", async (req, res) => {
     }
 
     if (VENDOR === "firebolt") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       const statement = await conn.execute(query);
       const { data } = await statement.fetchResult();
     } else if (VENDOR === "snowflake") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       await new Promise((resolve, reject) => {
         conn.execute({
           sqlText: query,
@@ -207,7 +207,7 @@ app.post("/execute", async (req, res) => {
         });
       });
     } else if (VENDOR === "redshift") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       const result = await conn.query(query);
     } else {
       return res.status(400).json({ error: `Unknown VENDOR: ${VENDOR}` });
@@ -227,16 +227,16 @@ app.get('/health', (req, res) => {
 // Start the server
 (async function startServer() {
   try {
-    const totalVUs = parseInt(CONNECTIONS_PER_SERVER, 10) || 1;
+    const numServerConnections = parseInt(CONNECTIONS_PER_THREAD, 10) || 1;
 
     // Pre-init connections
-    console.log(`Pre-initializing ${VENDOR} connections for ${totalVUs} VUs...`);
+    console.log(`Pre-initializing ${numServerConnections} connections to ${VENDOR}...`);
     const query_42 = "SELECT 42";
     if (VENDOR === "firebolt") {
       await getFireboltConnection(-1);
       const statement = await connections.get(-1).execute(query_42);
       const { data } = await statement.fetchResult();
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getFireboltConnection(i);
       }
     } else if (VENDOR === "snowflake") {
@@ -252,24 +252,24 @@ app.get('/health', (req, res) => {
           }
         });
       });
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getSnowflakeConnection(i);
       }
     } else if (VENDOR === "redshift") {
       await getRedshiftConnection(-1);
       const result = await connections.get(-1).query(query_42);
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getRedshiftConnection(i);
       }
     } else {
-      console.error("No recognized VENDOR, skipping pre-init connections.");
+      console.error("No recognized vendor, skipping pre-init connections.");
       process.exit(1);
     }
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
-      console.log(`VENDOR=${VENDOR}, VUS=${totalVUs}`);
+      console.log(`Vendor: ${VENDOR}, Connections: ${numServerConnections}`);
     });
   } catch (err) {
     console.error("Failed to initialize connections:", err);
