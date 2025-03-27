@@ -78,7 +78,7 @@ const { Client: RedshiftClient } = require("pg");
 const app = express();
 app.use(express.json());
 
-const CONNECTIONS_PER_SERVER = k6Config.connections_per_thread || 10;
+const CONNECTIONS_PER_THREAD = k6Config.connections_per_thread || 10;
 const VENDOR = k6Config.vendor ?? "firebolt";
 
 if (VENDOR === "snowflake") {
@@ -190,11 +190,11 @@ app.post("/execute", async (req, res) => {
     }
 
     if (VENDOR === "firebolt") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       const statement = await conn.execute(query);
       const { data } = await statement.fetchResult();
     } else if (VENDOR === "snowflake") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       await new Promise((resolve, reject) => {
         conn.execute({
           sqlText: query,
@@ -207,7 +207,7 @@ app.post("/execute", async (req, res) => {
         });
       });
     } else if (VENDOR === "redshift") {
-      const conn = connections.get((vuID % CONNECTIONS_PER_SERVER) + 1);
+      const conn = connections.get((vuID % CONNECTIONS_PER_THREAD) + 1);
       const result = await conn.query(query);
     } else {
       return res.status(400).json({ error: `Unknown VENDOR: ${VENDOR}` });
@@ -227,16 +227,16 @@ app.get('/health', (req, res) => {
 // Start the server
 (async function startServer() {
   try {
-    const totalVUs = parseInt(CONNECTIONS_PER_SERVER, 10) || 1;
+    const numServerConnections = parseInt(CONNECTIONS_PER_THREAD, 10) || 1;
 
     // Pre-init connections
-    console.log(`Pre-initializing ${VENDOR} connections for ${totalVUs} VUs...`);
+    console.log(`Pre-initializing ${numServerConnections} connections to ${VENDOR}...`);
     const query_42 = "SELECT 42";
     if (VENDOR === "firebolt") {
       await getFireboltConnection(-1);
       const statement = await connections.get(-1).execute(query_42);
       const { data } = await statement.fetchResult();
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getFireboltConnection(i);
       }
     } else if (VENDOR === "snowflake") {
@@ -252,24 +252,24 @@ app.get('/health', (req, res) => {
           }
         });
       });
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getSnowflakeConnection(i);
       }
     } else if (VENDOR === "redshift") {
       await getRedshiftConnection(-1);
       const result = await connections.get(-1).query(query_42);
-      for (let i = 1; i <= totalVUs; i++) {
+      for (let i = 1; i <= numServerConnections; i++) {
         await getRedshiftConnection(i);
       }
     } else {
-      console.error("No recognized VENDOR, skipping pre-init connections.");
+      console.error("No recognized vendor, skipping pre-init connections.");
       process.exit(1);
     }
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
-      console.log(`VENDOR=${VENDOR}, VUS=${totalVUs}`);
+      console.log(`Vendor: ${VENDOR}, Connections: ${numServerConnections}`);
     });
   } catch (err) {
     console.error("Failed to initialize connections:", err);

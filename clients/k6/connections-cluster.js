@@ -13,10 +13,10 @@ if (cluster.isMaster) {
     console.warn("Could not read or parse K6 config file:", err);
   }
 
-  const numCPUs = k6Config.number_of_threads;
+  const numberOfThreads = k6Config.number_of_threads;
   console.log(`Master process ${process.pid} is running`);
 
-  for (let i = 0; i < numCPUs; i++) {
+  for (let i = 0; i < numberOfThreads; i++) {
     cluster.fork();
   }
 
