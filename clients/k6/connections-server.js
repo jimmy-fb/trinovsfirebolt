@@ -78,13 +78,8 @@ const { Client: RedshiftClient } = require("pg");
 const app = express();
 app.use(express.json());
 
-/*
- * Change this value so that CONNECTIONS_PER_SERVER * numCPUs
- * (in connections-cluster.js) is >= the total number of VUs
- * you intend on using
- */
 const CONNECTIONS_PER_SERVER = k6Config.connections_per_thread || 10;
-const VENDOR = process.env.VENDOR ?? "firebolt";
+const VENDOR = k6Config.vendor ?? "firebolt";
 
 if (VENDOR === "snowflake") {
   snowflake.configure({
