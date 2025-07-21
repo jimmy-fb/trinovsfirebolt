@@ -1,0 +1,14 @@
+{
+    "count_query": [
+        "SELECT COUNT(*) FROM system.runtime.nodes",
+        "SELECT COUNT(*) AS node_count FROM system.runtime.nodes"
+    ],
+    "select_query": [
+        "SELECT * FROM system.runtime.nodes LIMIT 5",
+        "SELECT node_id, http_uri FROM system.runtime.nodes"
+    ],
+    "aggregate_query": [
+        "SELECT COUNT(*) as total_nodes FROM system.runtime.nodes",
+        "SELECT node_id FROM system.runtime.nodes ORDER BY node_id LIMIT 3"
+    ]
+} 

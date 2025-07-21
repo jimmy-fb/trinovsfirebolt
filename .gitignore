@@ -1,21 +1,207 @@
-# Credentials
-config/credentials/*.json
-!config/credentials/example-credentials.json
+# ========================
+# BENCHMARK-SPECIFIC IGNORES
+# ========================
 
-## Config
+# Credentials (NEVER commit real credentials)
+config/credentials/credentials.json
+config/credentials/*.json
+!config/credentials/sample_credentials.json
+credentials.json
+
+# Generated benchmark results
+benchmark_results/
+clients/python/benchmark_results/
+clients/python/src/benchmark_results/
+**/benchmark_results/
+results/
+**/results/
+
+# Result files
+results.csv
+summary_report.txt
+*.log
+output.txt
+*_output.txt
+*_results.csv
+trino_concurrency.csv
+
+# Visual results
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.svg
+
+# Configuration files that change per environment
 config/k6config.json
 
-# Other standard Python ignores
-.DS_Store
+# ========================
+# PYTHON IGNORES
+# ========================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+# .python-version
+
+# pipenv
+#Pipfile.lock
+
+# poetry
+#poetry.lock
+
+# pdm
+#pdm.lock
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
 .venv
-credentials.json
-__pycache__
-.pytest_cache
-benchmark_results*
-.vscode
-config/credentials/credentials.json
-__pycache__/
-*.pyc
-config/credentials/credentials.json
-__pycache__/
-*.pyc
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ========================
+# IDE & SYSTEM FILES
+# ========================
+
+# PyCharm / IntelliJ
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# System files (macOS)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# System files (Windows)
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~

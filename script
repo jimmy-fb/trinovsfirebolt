@@ -1,0 +1,29 @@
+# First, pull any existing changes from the repository
+git pull origin main
+
+# Add all your benchmark files
+git add benchmarks/custom_schema/
+git add clients/python/run_mixed_concurrency.py
+git add clients/python/test_trino_simple.py
+git add clients/python/benchmark_queries.csv
+git add clients/python/src/connectors/trino.py
+git add QUICK_START_TPCH_EXTERNAL.md
+git add test_tpch_external_benchmark.py
+
+# Create .gitignore to exclude sensitive files
+echo "config/credentials/credentials.json" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+git add .gitignore
+
+# Commit all the benchmark files
+git commit -m "Add comprehensive Trino vs Firebolt benchmark suite
+
+- Added custom schema benchmark with 10 comprehensive queries
+- Created mixed concurrency testing script for parallel execution  
+- Enhanced Trino connector for HTTP authentication
+- Added documentation and verification scripts
+- Included complete benchmark configuration files"
+
+# Push to your repository
+git push origin main

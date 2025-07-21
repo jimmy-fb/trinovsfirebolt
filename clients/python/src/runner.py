@@ -14,8 +14,8 @@ from pathlib import Path
 from queue import Queue
 from typing import Any, Dict, List, Optional
 
-from . import connectors
-from .exporters import CSVExporter, VisualExporter
+import connectors
+from exporters import CSVExporter, VisualExporter
 
 ITERATIONS_PER_QUERY = 5
 

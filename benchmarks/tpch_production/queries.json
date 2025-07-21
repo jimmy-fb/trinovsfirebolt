@@ -1,0 +1,18 @@
+{
+    "aggregation_queries": [
+        "SELECT o_orderstatus, COUNT(*) as order_count FROM orders WHERE o_orderdate >= DATE '1995-01-01' GROUP BY o_orderstatus",
+        "SELECT o_orderpriority, COUNT(*) as priority_count FROM orders WHERE o_orderdate >= DATE '1996-01-01' GROUP BY o_orderpriority"
+    ],
+    "join_queries": [
+        "SELECT c.c_mktsegment, COUNT(*) as customer_orders FROM customer c JOIN orders o ON c.c_custkey = o.c_custkey WHERE o.o_orderdate >= DATE '1995-01-01' GROUP BY c.c_mktsegment",
+        "SELECT n.n_name, COUNT(c.c_custkey) as customers FROM nation n JOIN customer c ON n.n_nationkey = c.c_nationkey GROUP BY n.n_name"
+    ],
+    "analytical_queries": [
+        "SELECT YEAR(o_orderdate) as order_year, SUM(o_totalprice) as yearly_revenue FROM orders WHERE o_orderdate >= DATE '1995-01-01' GROUP BY YEAR(o_orderdate) ORDER BY order_year",
+        "SELECT c_mktsegment, AVG(o_totalprice) as avg_order_value FROM customer c JOIN orders o ON c.c_custkey = o.c_custkey WHERE o_orderdate >= DATE '1995-01-01' GROUP BY c_mktsegment"
+    ],
+    "complex_queries": [
+        "SELECT n.n_name as nation, COUNT(s.s_suppkey) as suppliers FROM nation n JOIN supplier s ON n.n_nationkey = s.s_nationkey GROUP BY n.n_name ORDER BY suppliers DESC",
+        "SELECT r.r_name as region, COUNT(DISTINCT n.n_nationkey) as nations, COUNT(DISTINCT c.c_custkey) as customers FROM region r JOIN nation n ON r.r_regionkey = n.n_regionkey JOIN customer c ON n.n_nationkey = c.c_nationkey GROUP BY r.r_name"
+    ]
+} 

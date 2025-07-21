@@ -20,5 +20,9 @@ VENDOR_SETTINGS = {
         'max_retries': 3,
         'timeout': 300,
     },
+    'trino': {
+        'max_retries': 3,
+        'timeout': 300,
+    },
     # ... other vendor settings ...
 }

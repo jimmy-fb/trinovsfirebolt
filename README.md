@@ -1,194 +1,300 @@
-# Firebolt Benchmarks
+# 🚀 Trino vs Firebolt Performance Benchmark Suite
 
-In this repo, you’ll find the FireScale benchmark, as well as the benchmarking clients
-and benchmark results that Firebolt has published. This includes the DDL and queries
-for setting up and running FireScale on different vendors, as well as the results for
-how various vendors performed on FireScale.
+A comprehensive benchmarking toolkit for comparing SQL query performance between **Trino** and **Firebolt** using TPCH-style external tables and custom analytical workloads.
 
-## FireScale Benchmark Results
+## 📋 Table of Contents
 
-[To view benchmark results, click here.](results/)
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Benchmark Types](#benchmark-types)
+- [Repository Structure](#repository-structure)
+- [Configuration](#configuration)
+- [Running Benchmarks](#running-benchmarks)
+- [Results Analysis](#results-analysis)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
-## Run FireScale Yourself
+## 🎯 Overview
 
-Firebolt has provided two clients in this repo: one written in Python, and one written
-with Node.js with Grafana K6. The Python client is for power runs (executing one query
-at a time in a sequential pattern) and for concurrency benchmarking with low expected
-query throughput (<100 QPS). The K6 client is for benchmarking concurrent scenarios
-with high query volumes and hundreds or thousands of queries being completed each second.
+This repository provides a complete benchmarking framework to evaluate and compare the performance of **Trino** and **Firebolt** on analytical workloads. It includes:
 
-The Python client can be extended with benchmarks beyond just FireScale, though at this
-time, only FireScale and TPCH queries are provided.
+- **10 comprehensive SQL queries** covering different analytical patterns
+- **Sequential and concurrent execution** testing
+- **Mixed concurrency workloads** with parallel query execution
+- **Automated result collection** and CSV export
+- **Performance visualization** tools
+- **Extensible framework** for custom benchmarks
 
-View each client:
+## ✨ Features
 
-* [Python client](/clients/python/)
-* [K6 client](/clients/k6/)
+- 🔄 **Multi-Engine Support**: Compare Trino and Firebolt side-by-side
+- 📊 **Comprehensive Query Suite**: 10 analytical queries testing different patterns
+- ⚡ **Concurrency Testing**: Test performance under concurrent load (up to 15+ parallel queries)
+- 📈 **Performance Analytics**: Automated execution time measurement and comparison
+- 🎨 **Data Visualization**: Generate comparison charts and performance graphs
+- 🔧 **Flexible Configuration**: Easy setup with JSON-based credentials
+- 📝 **Detailed Reporting**: CSV exports and summary reports
+- 🛠️ **Extensible Design**: Add custom queries and benchmark scenarios
 
-### Credentials
+## 📋 Prerequisites
 
-To connect to each data warehouse vendor, you need to provide a single credentials file located
-at `config/credentials/credentials.json`. The expected format for this file is as follows:
+### Data Requirements
+- **External tables** configured in both Trino and Firebolt with TPCH data:
+  - `customer` - Customer information
+  - `lineitem` - Order line items  
+  - `products` - Product catalog
+  - `events` - Event data
+  - `orders` - Order information
+
+### System Requirements
+- Python 3.8+
+- Access to both Trino and Firebolt clusters
+- Network connectivity to both systems
+
+### Required Credentials
+- Trino coordinator access (host, port, credentials)
+- Firebolt service account (account name, database, engine, auth credentials)
+
+## 🚀 Quick Start
+
+### 1. Clone & Setup
+```bash
+git clone https://github.com/jimmy-fb/trinovsfirebolt.git
+cd trinovsfirebolt
+cd clients/python
+pip install -r requirements.txt
+```
+
+### 2. Configure Credentials
+```bash
+cp config/credentials/sample_credentials.json config/credentials/credentials.json
+# Edit credentials.json with your Trino and Firebolt details
+```
+
+### 3. Test Connections
+```bash
+python test_connection.py
+```
+
+### 4. Run Benchmark
+```bash
+# Sequential benchmark
+python -m src.main custom_schema --vendors firebolt,trino --execute-setup True
+
+# Concurrent benchmark (10 parallel queries for 60 seconds)
+python -m src.main custom_schema --vendors firebolt,trino --concurrency 10 --concurrency-duration-s 60
+```
+
+### 5. Mixed Concurrency Test
+```bash
+# Run all 10 different queries in parallel
+python run_mixed_concurrency.py
+```
+
+## 📊 Benchmark Types
+
+### 1. **Custom Schema Benchmark** (`benchmarks/custom_schema/`)
+Our primary benchmark suite with 10 comprehensive queries:
+
+| Query | Description | Complexity |
+|-------|-------------|------------|
+| Q1 | Customer aggregation | Basic |
+| Q2 | Order summary | Basic |
+| Q3 | Lineitem analysis | Medium |
+| Q4 | Customer-Order join | Medium |
+| Q5 | Product analysis | Basic |
+| Q6 | Event analysis | Basic |
+| Q7 | Multi-table join | High |
+| Q8 | Revenue by date range | Medium |
+| Q9 | Top customers ranking | High |
+| Q10 | Product performance | High |
+
+### 2. **TPCH External Tables** (`benchmarks/tpch_external_tables/`)
+Standard TPCH queries adapted for external table access.
+
+### 3. **Production Benchmarks** (`benchmarks/trino_production/`, `benchmarks/tpch_production/`)
+Real-world production-like scenarios with complex analytical workloads.
+
+## 📁 Repository Structure
+
+```
+trinovsfirebolt/
+├── benchmarks/                          # Benchmark definitions
+│   ├── custom_schema/                   # Primary Trino vs Firebolt benchmark
+│   │   ├── setup.sql                   # General setup SQL
+│   │   ├── benchmark.sql               # Main benchmark queries
+│   │   ├── warmup.sql                  # Warmup queries
+│   │   ├── queries.json               # Concurrent benchmark config
+│   │   ├── firebolt/                  # Firebolt-specific SQL
+│   │   └── trino/                     # Trino-specific SQL  
+│   ├── tpch_external_tables/          # TPCH benchmark suite
+│   ├── trino_production/              # Production Trino benchmarks
+│   └── tpch_production/               # Production TPCH benchmarks
+├── clients/
+│   └── python/                        # Python benchmark client
+│       ├── src/                       # Core benchmark framework
+│       │   ├── connectors/            # Database connectors
+│       │   ├── exporters/             # Result exporters
+│       │   ├── main.py               # CLI entry point
+│       │   └── runner.py             # Benchmark execution logic
+│       ├── run_mixed_concurrency.py  # Mixed concurrency script
+│       ├── benchmark_queries.csv     # Query documentation
+│       ├── plot.py                   # Visualization script
+│       └── requirements.txt          # Python dependencies
+├── config/
+│   ├── credentials/                   # Credential configuration
+│   └── settings.py                   # Application settings
+├── benchmark_results/                 # Generated results (not committed)
+├── QUICK_START_TPCH_EXTERNAL.md      # Quick start guide
+└── README.md                         # This file
+```
+
+## ⚙️ Configuration
+
+### Credentials Setup
+Edit `config/credentials/credentials.json`:
 
 ```json
 {
-    "snowflake": {
-        "account": "your_account",
-        "user": "your_username",
-        "password": "your_password",
-        "database": "your_database",
-        "schema": "your_schema",
-        "warehouse": "your_warehouse"
-    },
-    "redshift": {
-        "host": "your_cluster.region.redshift.amazonaws.com",
-        "port": 5439,
-        "database": "your_database",
-        "user": "your_user",
-        "password": "your_password"
-    },
     "firebolt": {
-        "account_name": "your firebolt account name",
-        "database": "your_database",
+        "account_name": "your_firebolt_account",
+        "database": "your_database", 
         "engine_name": "your_engine",
         "auth": {
-            "id": "your firebolt service account id",
-            "secret": "your firebolt service account secret"
+            "id": "your_service_account_id",
+            "secret": "your_service_account_secret"
         }
     },
-    "bigquery": {
-        "project_id": "your_project_id",
-        "dataset": "your_dataset",
-        "key": "your json key generated from google cloud"
+    "trino": {
+        "host": "your_trino_host",
+        "port": 443,
+        "catalog": "your_catalog",
+        "schema": "your_schema", 
+        "user": "your_username",
+        "password": "your_password",
+        "use_https": true,
+        "verify_ssl": true
     }
 }
 ```
 
-Create your `credentials.json` file, paste this template in, and then fill in the
-appropriate credentials for the vendors you wish to connect with. Please note that
-if you have a different means of authenticating with these vendors, you may also
-need to modify how the benchmarking clients handle authentication.
+## 🏃‍♂️ Running Benchmarks
 
-### Ingest Data
-
-In order to load the data into each system, you will need to run the `setup.sql` scripts
-present in the `/benchmarks` folder. You can do this manually in each vendor, or for ease,
-the Python client can do this programmatically at the start of a benchmark run. For example,
-to load data into Firebolt, configure your credentials, run:
-
+### Sequential Benchmarks
 ```bash
-/clients/python$ pip install -r requirements.txt
+cd clients/python
+
+# Test both engines
+python -m src.main custom_schema --vendors firebolt,trino
+
+# Test individual engines
+python -m src.main custom_schema --vendors firebolt
+python -m src.main custom_schema --vendors trino
 ```
 
-If you have other Python-based projects, it's recommended to do this with
-[venv](https://docs.python.org/3/library/venv.html) or [uv](https://github.com/astral-sh/uv).
-
-Then run:
-
+### Concurrent Benchmarks
 ```bash
-/clients/python$ python -m src.main FireScale --vendors firebolt --execute-setup True
+# 5 parallel queries for 30 seconds
+python -m src.main custom_schema --vendors firebolt,trino --concurrency 5 --concurrency-duration-s 30
+
+# 10 parallel queries for 60 seconds  
+python -m src.main custom_schema --vendors firebolt,trino --concurrency 10 --concurrency-duration-s 60
+
+# 15 parallel queries for 120 seconds
+python -m src.main custom_schema --vendors firebolt,trino --concurrency 15 --concurrency-duration-s 120
 ```
 
-This will ingest the data and then kick off an initial benchmark power run.
-
-## Directory Structure
-
-```
-project-root/
-│
-├── benchmarks/              # Contains benchmark definitions
-│   ├── sample_benchmark/
-│   │   ├── benchmark.sql          # General benchmark SQL file for sample_benchmark
-│   │   ├── setup.sql              # General setup SQL file for sample_benchmark
-│   │   └── firebolt/
-│   │       └── setup.sql          # firebolt specific setup SQL file
-│   │   
-│   ├── FireScale/
-│   │   ├── firebolt/
-│   │   │   ├── benchmark.sql      # firebolt specific benchmark SQL file
-│   │   │   ├── setup.sql          # firebolt specific setup SQL file
-│   │   |   ├── warmup.sql         # firebolt specific warmup SQL file
-│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
-│   │   │
-│   │   ├── snowflake/
-│   │   |   ├── benchmark.sql      # snowflake specific benchmark SQL file
-│   │   |   ├── setup.sql          # snowflake specific setup SQL file
-│   │   |   ├── warmup.sql         # snowflake specific warmup SQL file
-│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
-│   │   │
-│   │   ├── bigquery/
-│   │   |   ├── benchmark.sql      # bigquery specific benchmark SQL file
-│   │   |   └── setup.sql          # bigquery specific setup SQL file
-│   │   │
-│   │   ├── redshift/
-│   │   |   ├── benchmark.sql      # redshift specific benchmark SQL file
-│   │   |   ├── setup.sql          # redshift specific setup SQL file
-│   │   |   ├── warmup.sql         # redshift specific warmup SQL file
-│   │   |   └── queries.json       # queries for concurrent benchmarking w/Python
-|   |   |
-│   |   └── warmup.sql    # generic SQL warmup file for FireScale
-|   |
-|   ├── FireScale_k6/   # query files for K6 concurrent benchmarking for each vendor
-|   |   ├── queries_firebolt.js
-|   |   ├── queries_redshift.js
-|   |   └── queries_snowflake.js
-|   |
-|   └── tpch/
-|       ├── firebolt/
-|       |   └── benchmark.sql      # TPCH queries for Firebolt
-|       └── warmup.sql    # generic SQL warmup file for TPCH benchmark
-|
-├── clients/
-│   ├── python/
-|   |   ├── src/
-|   |   │   ├── connectors/          # Contains connector implementations
-|   |   │   │   ├── base.py
-|   |   │   │   ├── firebolt.py
-|   |   │   │   ├── bigquery.py
-|   |   │   │   ├── redshift.py
-|   |   │   │   └── snowflake.py
-|   |   |   ├── exporters/           # Contains exporter implementations
-|   |   │   │   ├── base.py
-|   |   │   │   ├── csv_exporter.py
-|   |   │   │   └── visual_exporter.py
-|   |   │   ├── main.py              # Entry point for the Python client tool
-|   |   │   └── runner.py            # Python benchmark runner logic
-|   |   ├── README.md                # Python client documentation
-|   |   └── requirements.txt         # Python package dependencies
-|   |
-│   └── k6/
-|       ├── connections-cluster.js   # entrypoint for K6 benchmarking
-|       ├── connections-server.js    # connections to vendors for K6
-|       ├── fb-benchmark-k6.js       # K6 benchmark runner
-|       ├── package-lock.json        
-|       ├── package.json
-|       └── README.md                # K6 client documentation
-|
-├── config/                  # Contains configuration files for the application
-│   ├── credentials/         # Contains credential files
-│   │   ├── credentials.json  # Single credentials file for all vendors (ignored)
-│   │   └── sample_credentials.json  # Sample credentials file with dummy data
-│   ├── k6config.json   # k6 configuration options
-│   └── settings.py     # python client settings (not recommneded to change)
-|
-├── results/        # benchmark results for various benchmarks and vendors
-|   └── ...
-|
-├── requirements.txt         # Python package dependencies
-├── LICENSE                # MIT License
-└── README.md                # Project documentation
+### Mixed Concurrency Testing
+```bash
+# Run all 10 different queries in parallel
+python run_mixed_concurrency.py
 ```
 
-## Contributing
+This script runs each of the 10 benchmark queries simultaneously, providing a realistic mixed workload scenario.
 
-Contributions are welcome! Please follow these steps to contribute:
+## 📈 Results Analysis
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-branch`).
-3. Make your changes and commit them (`git commit -m 'Add new feature'`).
-4. Push to the branch (`git push origin feature-branch`).
-5. Create a pull request.
+### Generated Files
+- **`benchmark_results/`** - All result files organized by vendor and test type
+- **`results.csv`** - Detailed execution metrics
+- **CSV exports** - Structured data for analysis
+- **Summary reports** - Human-readable performance summaries
 
-## License
+### Visualization
+```bash
+# Generate comparison charts
+python plot.py
+```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+### Key Metrics
+- **Execution Time** - Query completion time
+- **Throughput** - Queries per second
+- **Success Rate** - Percentage of successful queries
+- **Concurrency Handling** - Performance under load
+- **Failure Points** - Where systems reach limits
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Table Not Found**
+```bash
+# Verify external tables exist
+python test_connection.py
+```
+
+**Connection Errors**
+```bash
+# Test individual connections
+python test_trino_simple.py
+python -m src.test_connection
+```
+
+**Schema Mismatches**
+- Check table column names match expected schema in benchmark SQL files
+- Verify data types are compatible
+
+**High Concurrency Failures**
+- Trino may crash at high concurrency (>10-15 parallel queries)
+- Firebolt generally handles higher concurrency better
+- Reduce concurrency level if encountering connection refused errors
+
+### Performance Insights
+
+**Firebolt Advantages:**
+- Better concurrent query handling
+- Consistent performance under load
+- Superior aggregation performance
+
+**Trino Advantages:**  
+- Flexible data source connectivity
+- Standard SQL compatibility
+- Lower resource requirements for simple queries
+
+**Failure Patterns:**
+- Trino: Connection refused errors at high concurrency
+- Firebolt: Authentication/resource limit errors
+- Both: Timeout issues on complex queries
+
+## 🤝 Contributing
+
+1. **Add New Queries**: Extend `benchmark.sql` files
+2. **Custom Connectors**: Add new database connectors in `src/connectors/`
+3. **Visualization**: Enhance plotting and reporting tools
+4. **Benchmarks**: Create new benchmark scenarios
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Related Links
+
+- [Firebolt Documentation](https://docs.firebolt.io/)
+- [Trino Documentation](https://trino.io/docs/)
+- [TPCH Benchmark](http://www.tpc.org/tpch/)
+
+---
+
+**🎯 Ready to benchmark? Start with the [Quick Start Guide](QUICK_START_TPCH_EXTERNAL.md)!**

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "customer_analysis",
+    "query": "SELECT COUNT(*) as total_customers, COUNT(DISTINCT custkey) as unique_customers, AVG(acctbal) as avg_account_balance FROM customers"
+  },
+  {
+    "name": "order_summary",
+    "query": "SELECT orderstatus, COUNT(*) as order_count, SUM(totalprice) as total_revenue FROM orders WHERE orderdate >= DATE '1995-01-01' GROUP BY orderstatus ORDER BY total_revenue DESC"
+  },
+  {
+    "name": "lineitem_analysis",
+    "query": "SELECT l_returnflag, l_linestatus, COUNT(*) as line_count, SUM(l_quantity) as total_quantity FROM lineitem WHERE l_shipdate >= DATE '1995-01-01' GROUP BY l_returnflag, l_linestatus"
+  },
+  {
+    "name": "customer_order_join",
+    "query": "SELECT c.mktsegment, COUNT(DISTINCT c.custkey) as customer_count, COUNT(o.orderkey) as total_orders FROM customers c JOIN orders o ON c.custkey = o.custkey WHERE o.orderdate >= DATE '1995-01-01' GROUP BY c.mktsegment"
+  },
+  {
+    "name": "products_analysis",
+    "query": "SELECT COUNT(*) as total_products, COUNT(DISTINCT p_type) as unique_product_types, COUNT(DISTINCT p_brand) as unique_brands FROM products"
+  },
+  {
+    "name": "events_analysis",
+    "query": "SELECT COUNT(*) as total_events, COUNT(DISTINCT event_type) as unique_event_types FROM events WHERE event_timestamp >= TIMESTAMP '1995-01-01 00:00:00'"
+  },
+  {
+    "name": "complex_join",
+    "query": "SELECT c.mktsegment, COUNT(DISTINCT c.custkey) as customer_count, COUNT(DISTINCT o.orderkey) as order_count FROM customers c JOIN orders o ON c.custkey = o.custkey JOIN lineitem l ON o.orderkey = l.l_orderkey WHERE o.orderdate >= DATE '1995-01-01' GROUP BY c.mktsegment"
+  },
+  {
+    "name": "revenue_by_date",
+    "query": "SELECT YEAR(o.orderdate) as order_year, MONTH(o.orderdate) as order_month, COUNT(DISTINCT o.orderkey) as order_count FROM orders o WHERE o.orderdate >= DATE '1995-01-01' AND o.orderdate < DATE '1997-01-01' GROUP BY YEAR(o.orderdate), MONTH(o.orderdate)"
+  },
+  {
+    "name": "top_customers",
+    "query": "SELECT c.custkey, c.name, COUNT(o.orderkey) as order_count, SUM(totalprice) as total_revenue FROM customers c JOIN orders o ON c.custkey = o.custkey WHERE o.orderdate >= DATE '1995-01-01' GROUP BY c.custkey, c.name ORDER BY total_revenue DESC LIMIT 10"
+  },
+  {
+    "name": "product_performance",
+    "query": "SELECT p.p_brand, p.p_type, COUNT(DISTINCT l.l_orderkey) as order_count, SUM(l.l_quantity) as total_quantity FROM products p JOIN lineitem l ON p.p_partkey = l.l_partkey WHERE l.l_shipdate >= DATE '1995-01-01' GROUP BY p.p_brand, p.p_type ORDER BY total_quantity DESC LIMIT 10"
+  }
+] 

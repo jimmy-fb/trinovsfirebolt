@@ -1,0 +1,18 @@
+{
+    "catalog_discovery": [
+        "SELECT catalog_name, COUNT(*) as schema_count FROM information_schema.schemata GROUP BY catalog_name ORDER BY schema_count DESC",
+        "SELECT COUNT(DISTINCT catalog_name) as catalogs, COUNT(*) as total_schemas FROM information_schema.schemata"
+    ],
+    "table_analysis": [
+        "SELECT table_schema, COUNT(*) as table_count FROM information_schema.tables WHERE table_schema NOT IN ('information_schema') GROUP BY table_schema ORDER BY table_count DESC LIMIT 10",
+        "SELECT table_catalog, COUNT(DISTINCT table_schema) as schemas, COUNT(*) as tables FROM information_schema.tables GROUP BY table_catalog"
+    ],
+    "column_statistics": [
+        "SELECT table_schema, table_name, COUNT(*) as column_count FROM information_schema.columns WHERE table_schema NOT IN ('information_schema') GROUP BY table_schema, table_name ORDER BY column_count DESC LIMIT 20",
+        "SELECT data_type, COUNT(*) as usage_count FROM information_schema.columns GROUP BY data_type ORDER BY usage_count DESC"
+    ],
+    "metadata_aggregation": [
+        "SELECT table_catalog, COUNT(DISTINCT table_schema) as schemas, COUNT(DISTINCT table_name) as tables, COUNT(*) as total_columns FROM information_schema.columns GROUP BY table_catalog ORDER BY total_columns DESC",
+        "SELECT is_nullable, COUNT(*) as column_count FROM information_schema.columns GROUP BY is_nullable"
+    ]
+} 

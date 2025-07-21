@@ -1,9 +1,13 @@
 import argparse
 import logging
 import os
+import sys
 from pathlib import Path
 
-from .runner import BenchmarkRunner, ConcurrentBenchmarkRunner
+# Add the src directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from runner import BenchmarkRunner, ConcurrentBenchmarkRunner
 
 
 def setup_logging():
