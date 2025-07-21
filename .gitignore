@@ -13,3 +13,9 @@ __pycache__
 .pytest_cache
 benchmark_results*
 .vscode
+config/credentials/credentials.json
+__pycache__/
+*.pyc
+config/credentials/credentials.json
+__pycache__/
+*.pyc
